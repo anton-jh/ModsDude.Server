@@ -1,0 +1,54 @@
+networks:
+  external:
+  backend:
+    internal: true
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.16.10.0/24
+
+services:
+  modsdude-server:
+    container_name: modsdude-server
+    build: .
+    networks:
+      - backend
+      - external
+    ports:
+      - "6001:80"
+      - "6002:443"
+      - "6003:22"
+    volumes:
+      - .:/app
+      - ./dev-certs:/dev-certs:ro
+
+      - /app/ModsDude.Server.Api/obj
+      - /app/ModsDude.Server.Api/bin
+
+    restart: unless-stopped
+
+    env_file:
+      - ./env/backend.env
+
+    environment:
+      - DOTNET_WATCH_RESTART_ON_RUDE_EDIT=true
+
+    depends_on:
+      - modsdude-db
+      - modsdude-storage
+
+  modsdude-db:
+    container_name: modsdude-db
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - MSSQL_SA_PASSWORD=Password1
+      - ACCEPT_EULA=Y
+    ports:
+      - "1443:1443"
+
+  modsdude-storage:
+    container_name: modsdude-storage
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - 10000:10000
+    command: azurite-blob --blobHost 0.0.0.0
