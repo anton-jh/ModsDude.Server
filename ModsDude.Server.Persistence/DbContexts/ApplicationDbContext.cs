@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Domain.Users;
+using ModsDude.Server.Persistence.ValueConverters;
 
 namespace ModsDude.Server.Persistence.DbContexts;
 public class ApplicationDbContext : DbContext
@@ -7,9 +8,9 @@ public class ApplicationDbContext : DbContext
     public required DbSet<User> Users { get; init; }
 
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        // TODO: Conversion for value objects
+        configurationBuilder.HasGuidIdConversion<UserId>();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
