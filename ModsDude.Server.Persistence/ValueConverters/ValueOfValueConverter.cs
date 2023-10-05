@@ -8,7 +8,7 @@ internal class ValueOfValueConverter<TValue, T> : ValueConverter<ValueOf<TValue,
     public ValueOfValueConverter()
         : base(
             model => model.Value,
-            value => ValueOf<TValue, T>.From(value))
+            provider => ValueOf<TValue, T>.From(provider))
     {
     }
 }

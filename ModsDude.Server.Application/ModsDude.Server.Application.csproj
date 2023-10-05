@@ -6,4 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ModsDude.Server.Domain\ModsDude.Server.Domain.csproj" />
+    <ProjectReference Include="..\ModsDude.Server.Persistence\ModsDude.Server.Persistence.csproj" />
+  </ItemGroup>
+
 </Project>
