@@ -1,4 +1,4 @@
-﻿namespace ModsDude.Server.Api.Schema;
+﻿namespace ModsDude.Server.Api.Schema.Roots;
 
 public class RootMutation
 {

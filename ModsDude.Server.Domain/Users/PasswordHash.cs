@@ -8,7 +8,7 @@ public class PasswordHash : ValueOf<string, PasswordHash>
     {
         if (string.IsNullOrWhiteSpace(Value))
         {
-            throw new DomainValidationException();
+            throw new DomainValidationException($"{nameof(PasswordHash)} cannot be empty or whitespace");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using ModsDude.Server.Common.Exceptions;
+﻿using ModsDude.Server.Domain.Exceptions;
 using ValueOf;
 
 namespace ModsDude.Server.Domain.Users;
@@ -8,7 +8,7 @@ public class Username : ValueOf<string, Username>
     {
         if (string.IsNullOrWhiteSpace(Value))
         {
-            throw new DomainValidationException();
+            throw new DomainValidationException($"{nameof(Username)} cannot be null or whitespace");
         }
     }
 }

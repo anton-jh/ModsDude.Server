@@ -25,6 +25,6 @@ public class UserRegistrator
 
         User user = new(username, hash);
 
-        await _userRepository.Add(user);
+        _userRepository.Add(user);
     }
 }

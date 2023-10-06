@@ -1,6 +1,6 @@
-﻿using BCrypt.Net;
+﻿using ModsDude.Server.Domain.Users;
 
-namespace ModsDude.Server.Domain.Users;
+namespace ModsDude.Server.Application.Users;
 public class PasswordHasher : IPasswordHasher
 {
     public PasswordHash Hash(Password password)

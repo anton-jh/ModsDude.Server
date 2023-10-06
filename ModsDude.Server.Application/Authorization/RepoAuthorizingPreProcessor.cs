@@ -5,13 +5,11 @@ using ModsDude.Server.Persistence.DbContexts;
 namespace ModsDude.Server.Application.Authorization;
 internal class RepoAuthorizingPreProcessor : IRequestPreProcessor<IRepoAuthorizedRequest>
 {
-    private readonly ApplicationDbContext _dbContext;
     private readonly RepoMembershipExtractor _repoMembershipExtractor;
 
 
-    public RepoAuthorizingPreProcessor(ApplicationDbContext dbContext, RepoMembershipExtractor repoMembershipExtractor)
+    public RepoAuthorizingPreProcessor(RepoMembershipExtractor repoMembershipExtractor)
     {
-        _dbContext = dbContext;
         _repoMembershipExtractor = repoMembershipExtractor;
     }
 
@@ -21,5 +19,6 @@ internal class RepoAuthorizingPreProcessor : IRequestPreProcessor<IRepoAuthorize
         RepoId repoId = await request.GetRepoId();
         // TODO: Extract repo memberships from ClaimsPrincipal
         // Maybe create some class for encapsulating a user's memberships with a method to get the level for a specific RepoId
+        // Maybe this needs to be in a PipelineBehaviour? Not sure if throwing here will actually stop the pipeline.
     }
 }

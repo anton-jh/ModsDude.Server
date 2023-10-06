@@ -1,4 +1,4 @@
-using ModsDude.Server.Api.Schema;
+using ModsDude.Server.Api.Schema.Roots;
 
 var builder = WebApplication.CreateBuilder(args);
 

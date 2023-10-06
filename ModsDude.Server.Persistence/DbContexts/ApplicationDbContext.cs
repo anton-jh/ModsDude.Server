@@ -18,7 +18,7 @@ public class ApplicationDbContext : DbContext
 
         configurationBuilder
             .Properties<RepoMembershipLevel>()
-            .HaveConversion
+            .HaveConversion<RepoMembershipLevelValueConverter>();
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
