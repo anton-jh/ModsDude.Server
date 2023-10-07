@@ -1,4 +1,5 @@
 ﻿using ModsDude.Server.Domain.Common;
+using ValueOf;
 
 namespace ModsDude.Server.Domain.Users;
 
@@ -22,5 +23,12 @@ public class RefreshToken
     public DateTime Expires { get; }
 }
 
-public class RefreshTokenId : GuidId<RefreshTokenId> { }
+public class RefreshTokenId : ValueOf<string, RefreshTokenId>
+{
+    public static RefreshTokenId NewId()
+    {
+        return From(Guid.NewGuid().ToString());
+    }
+}
+
 public class RefreshTokenFamilyId : GuidId<RefreshTokenFamilyId> { }

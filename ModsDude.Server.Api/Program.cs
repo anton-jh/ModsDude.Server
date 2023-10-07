@@ -3,6 +3,8 @@ using ModsDude.Server.Api.Schema.Roots;
 var builder = WebApplication.CreateBuilder(args);
 
 
+// TODO configure services
+
 builder.Services
     .AddGraphQLServer()
     .AddQueryType<RootQuery>()

@@ -19,8 +19,21 @@ public class UserRepository : IUserRepository
         _dbContext.Users.Add(user);
     }
 
-    public async Task<bool> CheckUsernameTakenAsync(Username username)
+    public async Task<bool> CheckUsernameTakenAsync(Username username, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.Users.AnyAsync(user => user.Username == username);
+        return await _dbContext.Users
+            .AnyAsync(user => user.Username == username, cancellationToken);
+    }
+
+    public async Task<User?> GetByIdAsync(UserId userId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Users
+            .FindAsync(new object[] { userId }, cancellationToken);
+    }
+
+    public async Task<User?> GetByUsernameAsync(Username username, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Username == username, cancellationToken);
     }
 }
