@@ -1,24 +1,30 @@
 ﻿using MediatR.Pipeline;
-using ModsDude.Server.Domain.Repos;
-using ModsDude.Server.Persistence.DbContexts;
+using ModsDude.Server.Application.Exceptions;
+using ModsDude.Server.Application.Services.Extensions;
+using ModsDude.Server.Domain.RepoMemberships;
 
 namespace ModsDude.Server.Application.Authorization;
-internal class RepoAuthorizingPreProcessor : IRequestPreProcessor<IRepoAuthorizedRequest>
+public class RepoAuthorizingPreProcessor : IRequestPreProcessor<IRepoAuthorizedRequest>
 {
-    private readonly RepoMembershipExtractor _repoMembershipExtractor;
+    private readonly IRepoMembershipRepository _repoMembershipRepository;
 
 
-    public RepoAuthorizingPreProcessor(RepoMembershipExtractor repoMembershipExtractor)
+    public RepoAuthorizingPreProcessor(IRepoMembershipRepository repoMembershipRepository)
     {
-        _repoMembershipExtractor = repoMembershipExtractor;
+        _repoMembershipRepository = repoMembershipRepository;
     }
 
 
     public async Task Process(IRepoAuthorizedRequest request, CancellationToken cancellationToken)
     {
-        RepoId repoId = await request.GetRepoId();
-        // TODO: Extract repo memberships from ClaimsPrincipal
-        // Maybe create some class for encapsulating a user's memberships with a method to get the level for a specific RepoId
-        // Maybe this needs to be in a PipelineBehaviour? Not sure if throwing here will actually stop the pipeline.
+        var repoId = await request.GetRepoId();
+        var userId = request.ClaimsPrincipal.GetUserId();
+        var memberships = await _repoMembershipRepository.GetByUserIdAsync(userId, cancellationToken);
+        var membership = memberships.FirstOrDefault(m => m.RepoId == repoId);
+
+        if (membership is null || membership.Level < request.MinimumMembershipLevel)
+        {
+            throw new RepoAccessDeniedException();
+        }
     }
 }

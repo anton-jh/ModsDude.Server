@@ -4,22 +4,24 @@ using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.Users;
 
 namespace ModsDude.Server.Application.Users;
-public record RegisterUserCommand(string Username, string Password, string SystemInvite) : IRequest;
+public record RegisterCommand(string Username, string Password, string SystemInvite) : IRequest<LoginResult>;
 
-public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
+public class RegisterCommandHandler : IRequestHandler<RegisterCommand, LoginResult>
 {
     private readonly UserRegistrator _userRegistrator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly LoginService _loginService;
 
 
-    public RegisterUserCommandHandler(UserRegistrator userRegistrator, IUnitOfWork unitOfWork)
+    public RegisterCommandHandler(UserRegistrator userRegistrator, IUnitOfWork unitOfWork, LoginService loginService)
     {
         _userRegistrator = userRegistrator;
         _unitOfWork = unitOfWork;
+        _loginService = loginService;
     }
 
 
-    public async Task Handle(RegisterUserCommand request, CancellationToken cancellationToken)
+    public async Task<LoginResult> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
         Username username = Username.From(request.Username);
         Password password = Password.From(request.Password);
@@ -28,5 +30,7 @@ public class RegisterUserCommandHandler : IRequestHandler<RegisterUserCommand>
         // TODO: Validate systemInvite against database
         await _userRegistrator.RegisterUser(username, password);
         await _unitOfWork.CommitAsync(cancellationToken);
+
+        return await _loginService.Login(username, password, cancellationToken);
     }
 }

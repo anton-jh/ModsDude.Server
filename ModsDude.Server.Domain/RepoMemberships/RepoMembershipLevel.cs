@@ -32,6 +32,20 @@ public record RepoMembershipLevel
     }
 
 
+    public static bool operator <(RepoMembershipLevel a, RepoMembershipLevel b)
+    {
+        return
+            (a == Guest && b == Member) ||
+            (a == Guest && b == Admin) ||
+            (a == Member && b == Admin);
+    }
+
+    public static bool operator >(RepoMembershipLevel a, RepoMembershipLevel b)
+    {
+        return a != b && b < a;
+    }
+
+
     private record GuestLevel : RepoMembershipLevel
     {
         public GuestLevel()

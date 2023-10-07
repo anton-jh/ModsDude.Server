@@ -12,9 +12,4 @@ public interface IRepoAuthorizedRequest : IRequest
     RepoMembershipLevel MinimumMembershipLevel { get; }
 }
 
-public interface IRepoAuthorizedRequest<T> : IRequest<T>
-{
-    ClaimsPrincipal ClaimsPrincipal { get; }
-    Task<RepoId> GetRepoId();
-    RepoMembershipLevel MinimumMembershipLevel { get; }
-}
+public interface IRepoAuthorizedRequest<T> : IRequest<T>, IRepoAuthorizedRequest { }
