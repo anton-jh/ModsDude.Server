@@ -51,7 +51,7 @@ public class LoginService
             user.Id,
             RefreshTokenFamilyId.NewId(),
             _timeService.GetNow(),
-            _timeService.GetNow().AddSeconds(_options.RefershTokenLifetimeInSeconds));
+            _timeService.GetNow().AddSeconds(_options.RefreshTokenLifetimeInSeconds));
         _refreshTokenRepository.Add(refreshToken);
         await _unitOfWork.CommitAsync(cancellationToken);
 
