@@ -1,10 +1,14 @@
+using Microsoft.EntityFrameworkCore;
+using ModsDude.Server.Api.Extensions;
 using ModsDude.Server.Api.Schema.Roots;
 using ModsDude.Server.Application;
+using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Application.Users;
 using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Users;
+using ModsDude.Server.Persistence.DbContexts;
 using ModsDude.Server.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +18,7 @@ builder.Services
     .AddGraphQLServer()
     .AddQueryType<RootQuery>()
     .AddMutationType<RootMutation>()
+    .AddTypeExtensionsFromAssemblyContaining<Program>()
     .AddMutationConventions();
 
 builder.Services
@@ -40,6 +45,12 @@ builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembmershipRepository>()
     .AddScoped<IRefreshTokenRepository, RefreshTokenRepository>()
     .AddScoped<IUserRepository, UserRepository>();
+
+builder.Services
+    .AddDbContext<ApplicationDbContext>(options =>
+        options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+builder.Services
+    .AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
 
 var app = builder.Build();

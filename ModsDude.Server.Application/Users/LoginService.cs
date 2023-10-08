@@ -9,9 +9,9 @@ public class LoginService
 {
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly PasswordHasher _passwordHasher;
+    private readonly IPasswordHasher _passwordHasher;
     private readonly UsersOptions _options;
-    private readonly JwtService _jwtService;
+    private readonly IJwtService _jwtService;
     private readonly ITimeService _timeService;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -19,9 +19,9 @@ public class LoginService
     public LoginService(
         IUserRepository userRepository,
         IRefreshTokenRepository refreshTokenRepository,
-        PasswordHasher passwordHasher,
+        IPasswordHasher passwordHasher,
         IOptions<UsersOptions> options,
-        JwtService jwtService,
+        IJwtService jwtService,
         ITimeService timeService,
         IUnitOfWork unitOfWork)
     {

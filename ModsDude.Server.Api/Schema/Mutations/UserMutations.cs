@@ -4,7 +4,7 @@ using ModsDude.Server.Application.Users;
 
 namespace ModsDude.Server.Api.Schema.Mutations;
 
-[ExtendObjectType<RootMutation>]
+[ExtendObjectType(typeof(RootMutation))]
 public class UserMutations
 {
     [UseMutationConvention]

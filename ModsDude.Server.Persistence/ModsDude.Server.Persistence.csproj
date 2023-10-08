@@ -11,6 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ModsDude.Server.Application\ModsDude.Server.Application.csproj" />
     <ProjectReference Include="..\ModsDude.Server.Domain\ModsDude.Server.Domain.csproj" />
   </ItemGroup>
 

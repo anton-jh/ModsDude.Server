@@ -21,18 +21,22 @@ services:
     volumes:
       - .:/app
       - ./dev-certs:/dev-certs:ro
-
       - /app/ModsDude.Server.Api/obj
       - /app/ModsDude.Server.Api/bin
-
+      - /app/ModsDude.Server.Application/obj
+      - /app/ModsDude.Server.Application/bin
+      - /app/ModsDude.Server.Domain/obj
+      - /app/ModsDude.Server.Domain/bin
+      - /app/ModsDude.Server.Persistence/obj
+      - /app/ModsDude.Server.Persistence/bin
+      - /app/ModsDude.Server.Services/obj
+      - /app/ModsDude.Server.Services/bin
     restart: unless-stopped
-
     env_file:
       - ./env/backend.env
-
     environment:
       - DOTNET_WATCH_RESTART_ON_RUDE_EDIT=true
-
+      - DOTNET_ConnectionStrings__Default=Server=modsdude-db;Port=1433;Database=modsdude;User Id=sa;Password=Modsdude2023;
     depends_on:
       - modsdude-db
       - modsdude-storage
@@ -40,11 +44,15 @@ services:
   modsdude-db:
     container_name: modsdude-db
     image: mcr.microsoft.com/mssql/server:2022-latest
+    networks:
+      - backend
+      - external
     environment:
-      - MSSQL_SA_PASSWORD=Password1
+      - MSSQL_SA_PASSWORD=Modsdude2023
       - ACCEPT_EULA=Y
     ports:
-      - "1443:1443"
+      - "1433:1433"
+#    command: bash -c 'until /opt/mssql-tools/bin/sqlcmd -U sa -P Modsdude2023 -Q "CREATE DATABASE modsdude-db"; do echo retry && sleep 1; done'
 
   modsdude-storage:
     container_name: modsdude-storage
