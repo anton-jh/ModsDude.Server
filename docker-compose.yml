@@ -52,7 +52,13 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
-#    command: bash -c 'until /opt/mssql-tools/bin/sqlcmd -U sa -P Modsdude2023 -Q "CREATE DATABASE modsdude-db"; do echo retry && sleep 1; done'
+
+  modsdude-db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    network_mode: service:modsdude-db
+    command: bash -c 'until /opt/mssql-tools/bin/sqlcmd -U sa -P Modsdude2023 -Q "CREATE DATABASE modsdude-db"; do echo retry && sleep 1; done'
+    depends_on:
+      - modsdude-db
 
   modsdude-storage:
     container_name: modsdude-storage
