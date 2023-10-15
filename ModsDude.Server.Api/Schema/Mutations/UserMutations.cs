@@ -18,4 +18,14 @@ public class UserMutations
     {
         return sender.Send(new RegisterCommand(username, password, systemInvite));
     }
+
+    [UseMutationConvention]
+    [Error(typeof(UserNotFoundException))]
+    [Error(typeof(WrongPasswordException))]
+    public Task<LoginResult> Login(
+        string username, string password,
+        [Service] ISender sender)
+    {
+        return sender.Send(new LoginCommand(username, password));
+    }
 }
