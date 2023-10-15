@@ -48,7 +48,7 @@ builder.Services
 
 builder.Services
     .AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+        options.UseSqlServer(builder.Configuration.GetConnectionString("Database")));
 builder.Services
     .AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
@@ -57,6 +57,13 @@ var app = builder.Build();
 
 
 app.MapGraphQL();
+
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
+        .Database.Migrate();
+}
 
 
 app.Run();

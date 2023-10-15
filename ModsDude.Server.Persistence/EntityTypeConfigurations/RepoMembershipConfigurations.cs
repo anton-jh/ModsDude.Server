@@ -23,10 +23,12 @@ internal static class RepoMembershipConfigurations
     {
         public void Configure(EntityTypeBuilder<RepoMembership> builder)
         {
-            builder.HasKey(m => new { m.UserId, m.RepoId });
+            builder.HasKey(x => new { x.UserId, x.RepoId });
 
-            builder.HasOne<User>().WithMany().HasForeignKey(m => m.UserId);
-            builder.HasOne<Repo>().WithMany().HasForeignKey(m => m.RepoId);
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId);
+            builder.HasOne<Repo>().WithMany().HasForeignKey(x => x.RepoId);
+
+            builder.Property(x => x.Level);
         }
     }
 }

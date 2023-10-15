@@ -24,8 +24,23 @@ internal static class UsersConfigurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.HasIndex(user => user.Username).IsUnique();
+            builder.HasIndex(x => x.Username).IsUnique();
+        }
+    }
+
+    internal class RefreshTokenEntity : IEntityTypeConfiguration<RefreshToken>
+    {
+        public void Configure(EntityTypeBuilder<RefreshToken> builder)
+        {
+            builder.HasKey(x => x.Id);
+
+            builder.HasOne<User>().WithMany().HasForeignKey(x => x.UserId);
+
+            builder.Property(x => x.FamilyId);
+            builder.Property(x => x.Created);
+            builder.Property(x => x.Expires);
+
+            builder.HasIndex(x => x.FamilyId);
         }
     }
 }
-

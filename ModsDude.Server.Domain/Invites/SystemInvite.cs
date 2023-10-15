@@ -14,7 +14,13 @@ public class SystemInvite
 
     public SystemInviteId Id { get; init; }
     public DateTime Expires { get; }
-    public SystemInviteUses UsesLeft { get; }
+    public SystemInviteUses UsesLeft { get; private set; }
+
+
+    public void DeductOneUse()
+    {
+        UsesLeft = UsesLeft.DeductOne();
+    }
 }
 
 public class SystemInviteId : ValueOf<string, SystemInviteId>
@@ -27,6 +33,22 @@ public class SystemInviteId : ValueOf<string, SystemInviteId>
 
 public class SystemInviteUses : ValueOf<int, SystemInviteUses>
 {
+    public bool Any()
+    {
+        return Value > 0;
+    }
+
+    public SystemInviteUses DeductOne()
+    {
+        if (Value == 0)
+        {
+            throw new InvalidOperationException($"Cannot deduct from 0 {nameof(SystemInviteUses)}");
+        }
+
+        return From(Value - 1);
+    }
+
+
     protected override void Validate()
     {
         if (Value < 0)

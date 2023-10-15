@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Exceptions;
+using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.Users;
 
@@ -13,18 +14,21 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, LoginResu
     private readonly IUnitOfWork _unitOfWork;
     private readonly LoginService _loginService;
     private readonly ISystemInviteRepository _systemInviteRepository;
+    private readonly ITimeService _timeService;
 
 
     public RegisterCommandHandler(
         UserRegistrator userRegistrator,
         IUnitOfWork unitOfWork,
         LoginService loginService,
-        ISystemInviteRepository systemInviteRepository)
+        ISystemInviteRepository systemInviteRepository,
+        ITimeService timeService)
     {
         _userRegistrator = userRegistrator;
         _unitOfWork = unitOfWork;
         _loginService = loginService;
         _systemInviteRepository = systemInviteRepository;
+        _timeService = timeService;
     }
 
 
@@ -32,8 +36,9 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, LoginResu
     {
         var username = Username.From(request.Username);
         var password = Password.From(request.Password);
+        var invite = SystemInviteId.From(request.SystemInvite);
 
-        await ValidateSystemInvite(SystemInviteId.From(request.SystemInvite), cancellationToken);
+        await UseInvite(invite, cancellationToken);
         await _userRegistrator.RegisterUser(username, password);
         await _unitOfWork.CommitAsync(cancellationToken);
 
@@ -41,11 +46,22 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, LoginResu
     }
 
 
-    private async Task ValidateSystemInvite(SystemInviteId systemInviteId, CancellationToken cancellationToken)
+    private async Task UseInvite(SystemInviteId systemInviteId, CancellationToken cancellationToken)
     {
-        var systemInvite = await _systemInviteRepository.GetByIdAsync(systemInviteId, cancellationToken)
-            ?? throw new InvalidSystemInviteException();
+        var invite = await _systemInviteRepository.GetByIdAsync(systemInviteId, cancellationToken);
 
-        _systemInviteRepository.Delete(systemInvite);
+        if (invite is null ||
+            invite.Expires < _timeService.GetNow() ||
+            !invite.UsesLeft.Any())
+        {
+            throw new InvalidSystemInviteException();
+        }
+
+        invite.DeductOneUse();
+
+        if (!invite.UsesLeft.Any())
+        {
+            _systemInviteRepository.Delete(invite);
+        }
     }
 }

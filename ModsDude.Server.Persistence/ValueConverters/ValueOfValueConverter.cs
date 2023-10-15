@@ -2,7 +2,7 @@
 using ValueOf;
 
 namespace ModsDude.Server.Persistence.ValueConverters;
-internal class ValueOfValueConverter<TValue, T> : ValueConverter<ValueOf<TValue, T>, TValue>
+internal class ValueOfValueConverter<TValue, T> : ValueConverter<T, TValue>
     where T : ValueOf<TValue, T>, new()
 {
     public ValueOfValueConverter()

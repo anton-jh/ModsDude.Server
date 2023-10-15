@@ -26,6 +26,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
         configurationBuilder
             .ConfigureSystemInviteConventions()
             .ConfigureRepoMembershipConventions()
+            .ConfigureRepoConventions()
             .ConfigureUserConventions();
     }
 

@@ -1,6 +1,8 @@
 ﻿using MediatR;
 using ModsDude.Server.Api.Schema.Roots;
+using ModsDude.Server.Application.Exceptions;
 using ModsDude.Server.Application.Users;
+using ModsDude.Server.Domain.Exceptions;
 
 namespace ModsDude.Server.Api.Schema.Mutations;
 
@@ -8,6 +10,8 @@ namespace ModsDude.Server.Api.Schema.Mutations;
 public class UserMutations
 {
     [UseMutationConvention]
+    [Error(typeof(UsernameTakenException))]
+    [Error(typeof(InvalidSystemInviteException))]
     public Task<LoginResult> RegisterUser(
         string username, string password, string systemInvite,
         [Service] ISender sender)

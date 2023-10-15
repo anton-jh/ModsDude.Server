@@ -11,7 +11,7 @@ public class User
         Id = UserId.NewId();
     }
 
-    public UserId Id { get; init; }
+    public UserId Id { get; private set; }
 
     public Username Username { get; set; }
     public PasswordHash PasswordHash { get; set; }
