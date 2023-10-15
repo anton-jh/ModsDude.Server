@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using ModsDude.Server.Persistence.ValueConverters;
 using ValueOf;
 
-namespace ModsDude.Server.Persistence.ValueConverters;
+namespace ModsDude.Server.Persistence.Extensions;
 internal static class ModelConfigurationBuilderExtensions
 {
     public static ModelConfigurationBuilder HasValueOfConversion<TValue, TProp>(this ModelConfigurationBuilder builder)

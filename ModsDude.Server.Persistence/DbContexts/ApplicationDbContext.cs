@@ -23,11 +23,7 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-        configurationBuilder
-            .ConfigureSystemInviteConventions()
-            .ConfigureRepoMembershipConventions()
-            .ConfigureRepoConventions()
-            .ConfigureUserConventions();
+
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
