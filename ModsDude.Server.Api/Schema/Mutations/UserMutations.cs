@@ -3,6 +3,7 @@ using ModsDude.Server.Api.Schema.Roots;
 using ModsDude.Server.Application.Exceptions;
 using ModsDude.Server.Application.Users;
 using ModsDude.Server.Domain.Exceptions;
+using ModsDude.Server.Domain.Users;
 
 namespace ModsDude.Server.Api.Schema.Mutations;
 
@@ -27,5 +28,13 @@ public class UserMutations
         [Service] ISender sender)
     {
         return sender.Send(new LoginCommand(username, password));
+    }
+
+    [Error(typeof(InvalidRefreshTokenException))]
+    public Task<LoginResult> Refresh(
+        string refreshToken,
+        [Service] ISender sender)
+    {
+        return sender.Send(new RefreshCommand(refreshToken));
     }
 }

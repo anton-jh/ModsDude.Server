@@ -1,4 +1,4 @@
-﻿namespace ModsDude.Server.Application.Users;
+﻿namespace ModsDude.Server.Domain.Users;
 public class UsersOptions
 {
     public required string JwtSigningKey { get; init; }

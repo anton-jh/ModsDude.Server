@@ -1,4 +1,4 @@
-﻿namespace ModsDude.Server.Application.Services;
+﻿namespace ModsDude.Server.Domain.Common;
 public interface ITimeService
 {
     DateTime GetNow();

@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Exceptions;
-using ModsDude.Server.Application.Services;
+using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.Users;
 
@@ -40,7 +40,7 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, LoginResu
 
         await UseInvite(invite, cancellationToken);
         await _userRegistrator.RegisterUser(username, password);
-        await _unitOfWork.CommitAsync(cancellationToken);
+        await _unitOfWork.CommitAsync();
 
         return await _loginService.Login(username, password, cancellationToken);
     }

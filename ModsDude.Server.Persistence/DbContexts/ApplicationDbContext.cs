@@ -32,8 +32,8 @@ public class ApplicationDbContext : DbContext, IUnitOfWork
     }
 
 
-    public Task CommitAsync(CancellationToken cancellationToken = default)
+    public Task CommitAsync()
     {
-        return SaveChangesAsync(cancellationToken);
+        return SaveChangesAsync();
     }
 }

@@ -5,6 +5,7 @@ using ModsDude.Server.Application;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Application.Users;
+using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Users;
@@ -32,7 +33,9 @@ builder.Services
 builder.Services
     .AddScoped<LoginService>()
     .AddSingleton<IPasswordHasher, PasswordHasher>()
-    .AddScoped<UserRegistrator>();
+    .AddScoped<UserRegistrator>()
+    .AddScoped<TokenRefresher>()
+    .AddScoped<RefreshTokenFactory>();
 
 builder.Services
     .AddOptions<UsersOptions>()
@@ -42,7 +45,7 @@ builder.Services
 
 builder.Services
     .AddScoped<ISystemInviteRepository, SystemInviteRepository>()
-    .AddScoped<IRepoMembershipRepository, RepoMembmershipRepository>()
+    .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
     .AddScoped<IRefreshTokenRepository, RefreshTokenRepository>()
     .AddScoped<IUserRepository, UserRepository>();
 

@@ -29,6 +29,12 @@ public class RefreshTokenRepository : IRefreshTokenRepository
             .RemoveRange(tokens);
     }
 
+    public async Task<RefreshToken?> GetAsync(RefreshTokenId id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.RefreshTokens
+            .FindAsync(new object[] { id }, cancellationToken);
+    }
+
     public async Task<RefreshToken?> GetLatestInFamilyAsync(RefreshTokenFamilyId familyId, CancellationToken cancellationToken = default)
     {
         return await _dbContext.RefreshTokens

@@ -5,12 +5,12 @@ using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 
 namespace ModsDude.Server.Persistence.Repositories;
-public class RepoMembmershipRepository : IRepoMembershipRepository
+public class RepoMembershipRepository : IRepoMembershipRepository
 {
     private readonly ApplicationDbContext _dbContext;
 
 
-    public RepoMembmershipRepository(ApplicationDbContext dbContext)
+    public RepoMembershipRepository(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
     }

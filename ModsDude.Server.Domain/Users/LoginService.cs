@@ -1,37 +1,35 @@
 ﻿using Microsoft.Extensions.Options;
-using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Exceptions;
-using ModsDude.Server.Application.Services;
-using ModsDude.Server.Domain.Users;
+using ModsDude.Server.Domain.Common;
+using ModsDude.Server.Domain.Exceptions;
 
-namespace ModsDude.Server.Application.Users;
+namespace ModsDude.Server.Domain.Users;
 public class LoginService
 {
+    private readonly RefreshTokenFactory _refreshTokenFactory;
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly UsersOptions _options;
     private readonly IJwtService _jwtService;
     private readonly ITimeService _timeService;
-    private readonly IUnitOfWork _unitOfWork;
 
 
     public LoginService(
+        RefreshTokenFactory refreshTokenFactory,
         IUserRepository userRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IPasswordHasher passwordHasher,
         IOptions<UsersOptions> options,
         IJwtService jwtService,
-        ITimeService timeService,
-        IUnitOfWork unitOfWork)
+        ITimeService timeService)
     {
+        _refreshTokenFactory = refreshTokenFactory;
         _userRepository = userRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _passwordHasher = passwordHasher;
         _options = options.Value;
         _jwtService = jwtService;
         _timeService = timeService;
-        _unitOfWork = unitOfWork;
     }
 
 
@@ -47,14 +45,9 @@ public class LoginService
 
         var accessToken = _jwtService.GenerateForUser(user.Id);
 
-        var refreshToken = new RefreshToken(
-            user.Id,
-            RefreshTokenFamilyId.NewId(),
-            _timeService.GetNow(),
-            _timeService.GetNow().AddSeconds(_options.RefreshTokenLifetimeInSeconds));
+        var refreshToken = _refreshTokenFactory.Create(user.Id, null);
         _refreshTokenRepository.Add(refreshToken);
-        await _unitOfWork.CommitAsync(cancellationToken);
 
-        return new LoginResult(accessToken, refreshToken.Id.Value.ToString());
+        return new LoginResult(accessToken, refreshToken.Id.Value);
     }
 }
