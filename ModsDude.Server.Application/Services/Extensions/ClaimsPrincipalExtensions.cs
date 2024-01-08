@@ -13,7 +13,7 @@ public static class ClaimsPrincipalExtensions
 
         try
         {
-            return UserId.From(Guid.Parse(value));
+            return UserId.From(value);
         }
         catch (DomainValidationException)
         {

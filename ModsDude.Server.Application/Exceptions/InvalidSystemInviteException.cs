@@ -1,4 +1,2 @@
 ﻿namespace ModsDude.Server.Application.Exceptions;
-public class InvalidSystemInviteException : Exception
-{
-}
+public class InvalidSystemInviteException : Exception;

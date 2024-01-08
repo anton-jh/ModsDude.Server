@@ -12,4 +12,4 @@ public interface IRepoAuthorizedRequest : IRequest
     RepoMembershipLevel MinimumMembershipLevel { get; }
 }
 
-public interface IRepoAuthorizedRequest<T> : IRequest<T>, IRepoAuthorizedRequest { }
+public interface IRepoAuthorizedRequest<T> : IRequest<T>, IRepoAuthorizedRequest;

@@ -1,4 +1,2 @@
 ﻿namespace ModsDude.Server.Application;
-public class ApplicationAssemblyMarker
-{
-}
+public class ApplicationAssemblyMarker;

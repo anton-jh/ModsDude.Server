@@ -1,20 +1,11 @@
-﻿using ModsDude.Server.Domain.Common;
+﻿using ValueOf;
 
 namespace ModsDude.Server.Domain.Users;
-public class User
+public class User(UserId id, Username username)
 {
-    public User(Username username, PasswordHash passwordHash)
-    {
-        Username = username;
-        PasswordHash = passwordHash;
+    public UserId Id { get; private set; } = id;
 
-        Id = UserId.NewId();
-    }
-
-    public UserId Id { get; private set; }
-
-    public Username Username { get; set; }
-    public PasswordHash PasswordHash { get; set; }
+    public Username Username { get; set; } = username;
 }
 
-public class UserId : GuidId<UserId> { }
+public class UserId : ValueOf<string, UserId>;

@@ -4,7 +4,6 @@ using ModsDude.Server.Api.Schema.Roots;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Services;
-using ModsDude.Server.Application.Users;
 using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.RepoMemberships;
@@ -27,26 +26,11 @@ builder.Services
         config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>());
 
 builder.Services
-    .AddScoped<IJwtService, JwtService>()
     .AddSingleton<ITimeService, TimeService>();
-
-builder.Services
-    .AddScoped<LoginService>()
-    .AddSingleton<IPasswordHasher, PasswordHasher>()
-    .AddScoped<UserRegistrator>()
-    .AddScoped<TokenRefresher>()
-    .AddScoped<RefreshTokenFactory>();
-
-builder.Services
-    .AddOptions<UsersOptions>()
-    .BindConfiguration("Features:Users")
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 
 builder.Services
     .AddScoped<ISystemInviteRepository, SystemInviteRepository>()
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
-    .AddScoped<IRefreshTokenRepository, RefreshTokenRepository>()
     .AddScoped<IUserRepository, UserRepository>();
 
 builder.Services

@@ -2,19 +2,11 @@
 using ValueOf;
 
 namespace ModsDude.Server.Domain.Invites;
-public class SystemInvite
+public class SystemInvite(DateTime expires, SystemInviteUses usesLeft)
 {
-    public SystemInvite(DateTime expires, SystemInviteUses usesLeft)
-    {
-        Id = SystemInviteId.NewId();
-        Expires = expires;
-        UsesLeft = usesLeft;
-    }
-
-
-    public SystemInviteId Id { get; init; }
-    public DateTime Expires { get; }
-    public SystemInviteUses UsesLeft { get; private set; }
+    public SystemInviteId Id { get; init; } = SystemInviteId.NewId();
+    public DateTime Expires { get; } = expires;
+    public SystemInviteUses UsesLeft { get; private set; } = usesLeft;
 
 
     public void DeductOneUse()

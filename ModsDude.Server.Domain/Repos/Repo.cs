@@ -16,4 +16,4 @@ public class Repo
     public RepoName Name { get; }
 }
 
-public class RepoId : GuidId<RepoId> { }
+public class RepoId : GuidId<RepoId>;

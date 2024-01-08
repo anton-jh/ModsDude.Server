@@ -5,28 +5,19 @@ using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 
 namespace ModsDude.Server.Persistence.Repositories;
-public class RepoMembershipRepository : IRepoMembershipRepository
+public class RepoMembershipRepository(ApplicationDbContext dbContext) : IRepoMembershipRepository
 {
-    private readonly ApplicationDbContext _dbContext;
-
-
-    public RepoMembershipRepository(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-
     public async Task<IEnumerable<RepoMembership>> GetByRepoIdAsync(RepoId repoId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.RepoMemberships
+        return await dbContext.RepoMemberships
             .Where(m => m.RepoId == repoId)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<RepoMembership>> GetByUserIdAsync(UserId userId, CancellationToken cancellationToken = default)
     {
-        return await _dbContext.RepoMemberships
+        return await dbContext.RepoMemberships
             .Where(m => m.UserId == userId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
     }
 }

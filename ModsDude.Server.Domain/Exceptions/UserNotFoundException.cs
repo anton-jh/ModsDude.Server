@@ -1,4 +1,2 @@
 ﻿namespace ModsDude.Server.Domain.Exceptions;
-public class UserNotFoundException : Exception
-{
-}
+public class UserNotFoundException : Exception;

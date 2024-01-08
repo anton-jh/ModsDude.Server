@@ -4,22 +4,13 @@ using ModsDude.Server.Application.Services.Extensions;
 using ModsDude.Server.Domain.RepoMemberships;
 
 namespace ModsDude.Server.Application.Authorization;
-public class RepoAuthorizingPreProcessor : IRequestPreProcessor<IRepoAuthorizedRequest>
+public class RepoAuthorizingPreProcessor(IRepoMembershipRepository repoMembershipRepository) : IRequestPreProcessor<IRepoAuthorizedRequest>
 {
-    private readonly IRepoMembershipRepository _repoMembershipRepository;
-
-
-    public RepoAuthorizingPreProcessor(IRepoMembershipRepository repoMembershipRepository)
-    {
-        _repoMembershipRepository = repoMembershipRepository;
-    }
-
-
     public async Task Process(IRepoAuthorizedRequest request, CancellationToken cancellationToken)
     {
         var repoId = await request.GetRepoId();
         var userId = request.ClaimsPrincipal.GetUserId();
-        var memberships = await _repoMembershipRepository.GetByUserIdAsync(userId, cancellationToken);
+        var memberships = await repoMembershipRepository.GetByUserIdAsync(userId, cancellationToken);
         var membership = memberships.FirstOrDefault(m => m.RepoId == repoId);
 
         if (membership is null || membership.Level < request.MinimumMembershipLevel)
