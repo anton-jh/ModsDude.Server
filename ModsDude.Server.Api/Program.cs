@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Extensions;
 using ModsDude.Server.Api.Schema.Roots;
@@ -26,6 +27,19 @@ builder.Services
         config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>());
 
 builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    }).AddJwtBearer(options =>
+    {
+        options.Authority = builder.Configuration.GetValue<string>("Auth:Authority");
+        options.Audience = builder.Configuration.GetValue<string>("Auth:Audience");
+    });
+builder.Services
+    .AddAuthorization();
+
+builder.Services
     .AddSingleton<ITimeService, TimeService>();
 
 builder.Services
@@ -42,6 +56,9 @@ builder.Services
 
 var app = builder.Build();
 
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGraphQL();
 
