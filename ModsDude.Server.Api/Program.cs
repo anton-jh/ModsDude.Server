@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Extensions;
 using ModsDude.Server.Api.Schema.Roots;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
-using ModsDude.Server.Domain.Invites;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
@@ -17,6 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
     .AddGraphQLServer()
+    .AddAuthorization()
     .AddQueryType<RootQuery>()
     .AddMutationType<RootMutation>()
     .AddTypeExtensionsFromAssemblyContaining<Program>()
@@ -36,14 +37,13 @@ builder.Services
         options.Authority = builder.Configuration.GetValue<string>("Auth:Authority");
         options.Audience = builder.Configuration.GetValue<string>("Auth:Audience");
     });
-builder.Services
-    .AddAuthorization();
+builder.Services.AddAuthorization(options
+    => options.AddApplicationPolicies());
 
 builder.Services
     .AddSingleton<ITimeService, TimeService>();
 
 builder.Services
-    .AddScoped<ISystemInviteRepository, SystemInviteRepository>()
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
     .AddScoped<IUserRepository, UserRepository>();
 
@@ -60,7 +60,8 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGraphQL();
+app.MapGraphQLHttp();
+app.MapBananaCakePop();
 
 
 using (var scope = app.Services.CreateScope())

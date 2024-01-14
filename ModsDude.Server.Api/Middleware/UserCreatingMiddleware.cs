@@ -1,34 +1,38 @@
-﻿using ModsDude.Server.Domain.Users;
-using ModsDude.Server.Persistence.DbContexts;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+﻿//using ModsDude.Server.Domain.Users;
+//using ModsDude.Server.Persistence.DbContexts;
+//using System.IdentityModel.Tokens.Jwt;
 
-namespace ModsDude.Server.Api.Middleware;
+//namespace ModsDude.Server.Api.Middleware;
 
-public class UserCreatingMiddleware(RequestDelegate next)
-{
-    public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext)
-    {
-        var isAuthenticated = (context.User.Identity?.IsAuthenticated ?? false);
-        var subClaim = context.User.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Sub);
-        var nameClaim = context.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name);
+//public class UserCreatingMiddleware(RequestDelegate next)
+//{
+//    public async Task InvokeAsync(HttpContext context, ApplicationDbContext dbContext)
+//    {
+//        var isAuthenticated = (context.User.Identity?.IsAuthenticated ?? false);
+//        var subClaim = context.User.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Sub);
 
-        if (isAuthenticated && subClaim is not null && nameClaim is not null)
-        {
-            var userId = UserId.From(subClaim.Value);
-            var existingUser = await dbContext.Users.FindAsync(subClaim);
+//        if (!isAuthenticated || subClaim is null)
+//        {
+//            await next(context);
+//            return;
+//        }
 
-            if (existingUser is null)
-            {
-                var username = Username.From(nameClaim.Value);
-                var newUser = new User(userId, username);
+//        var userId = UserId.From(subClaim.Value);
+//        var existingUser = await dbContext.Users.FindAsync(subClaim);
 
-                dbContext.Users.Add(newUser);
+//        if (existingUser is not null)
+//        {
+//            await next(context);
+//            return;
+//        }
 
-                await dbContext.SaveChangesAsync();
-            }
-        }
+//        var username = Username.From(nameClaim.Value); // todo
+//        var newUser = new User(userId, username);
 
-        await next(context);
-    }
-}
+//        dbContext.Users.Add(newUser);
+
+//        await dbContext.SaveChangesAsync();
+
+//        await next(context);
+//    }
+//}

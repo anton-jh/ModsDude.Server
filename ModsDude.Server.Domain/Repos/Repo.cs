@@ -1,19 +1,11 @@
 ﻿using ModsDude.Server.Domain.Common;
 
 namespace ModsDude.Server.Domain.Repos;
-public class Repo
+public class Repo(RepoName name)
 {
-    public Repo(RepoName name)
-    {
-        Name = name;
+    public RepoId Id { get; private set; } = RepoId.NewId();
 
-        Id = RepoId.NewId();
-    }
-
-
-    public RepoId Id { get; private set; }
-
-    public RepoName Name { get; }
+    public RepoName Name { get; } = name;
 }
 
 public class RepoId : GuidId<RepoId>;
