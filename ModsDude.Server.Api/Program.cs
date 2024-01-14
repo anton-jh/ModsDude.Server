@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using ModsDude.Server.Api.Auth0.AuthenticationApi;
 using ModsDude.Server.Api.Authorization;
-using ModsDude.Server.Api.Extensions;
-using ModsDude.Server.Api.Schema.Roots;
+using ModsDude.Server.Api.Middleware.CreateUser;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Services;
@@ -14,14 +14,7 @@ using ModsDude.Server.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-builder.Services
-    .AddGraphQLServer()
-    .AddAuthorization()
-    .AddQueryType<RootQuery>()
-    .AddMutationType<RootMutation>()
-    .AddTypeExtensionsFromAssemblyContaining<Program>()
-    .AddMutationConventions();
+builder.Services.AddControllers();
 
 builder.Services
     .AddMediatR(config =>
@@ -36,9 +29,16 @@ builder.Services
     {
         options.Authority = builder.Configuration.GetValue<string>("Auth:Authority");
         options.Audience = builder.Configuration.GetValue<string>("Auth:Audience");
+        options.MapInboundClaims = false;
     });
 builder.Services.AddAuthorization(options
     => options.AddApplicationPolicies());
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<UserCreatingMiddleware>();
+
+builder.Services.AddHttpClient<Auth0AuthenticationApiClient>();
 
 builder.Services
     .AddSingleton<ITimeService, TimeService>();
@@ -60,8 +60,10 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGraphQLHttp();
-app.MapBananaCakePop();
+app.UseMiddleware<UserCreatingMiddleware>();
+
+app.MapControllers()
+    .RequireAuthorization();
 
 
 using (var scope = app.Services.CreateScope())
