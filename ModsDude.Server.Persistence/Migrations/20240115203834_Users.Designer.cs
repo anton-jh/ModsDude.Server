@@ -12,7 +12,7 @@ using ModsDude.Server.Persistence.DbContexts;
 namespace ModsDude.Server.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240114212049_Users")]
+    [Migration("20240115203834_Users")]
     partial class Users
     {
         /// <inheritdoc />
@@ -62,6 +62,15 @@ namespace ModsDude.Server.Persistence.Migrations
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastSeen")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ProfileLastUpdated")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Username")
                         .IsRequired()

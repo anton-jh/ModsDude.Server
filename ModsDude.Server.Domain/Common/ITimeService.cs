@@ -1,5 +1,5 @@
 ﻿namespace ModsDude.Server.Domain.Common;
 public interface ITimeService
 {
-    DateTime GetNow();
+    DateTime Now();
 }

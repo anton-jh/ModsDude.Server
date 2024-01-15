@@ -60,6 +60,15 @@ namespace ModsDude.Server.Persistence.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastSeen")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ProfileLastUpdated")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");

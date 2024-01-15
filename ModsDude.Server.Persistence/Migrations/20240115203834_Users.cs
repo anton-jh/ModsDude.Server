@@ -28,7 +28,10 @@ namespace ModsDude.Server.Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Username = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    Username = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastSeen = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ProfileLastUpdated = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -36,7 +36,7 @@ builder.Services.AddAuthorization(options
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddScoped<UserCreatingMiddleware>();
+builder.Services.AddScoped<UserLoadingMiddleware>();
 
 builder.Services.AddHttpClient<Auth0AuthenticationApiClient>();
 
@@ -60,7 +60,7 @@ var app = builder.Build();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseMiddleware<UserCreatingMiddleware>();
+app.UseMiddleware<UserLoadingMiddleware>();
 
 app.MapControllers()
     .RequireAuthorization();

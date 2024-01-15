@@ -3,7 +3,7 @@
 namespace ModsDude.Server.Application.Services;
 public class TimeService : ITimeService
 {
-    public DateTime GetNow()
+    public DateTime Now()
     {
         return DateTime.UtcNow;
     }
