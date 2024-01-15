@@ -1,2 +1,2 @@
 ﻿namespace ModsDude.Server.Application.Exceptions;
-public class RepoAccessDeniedException : Exception;
+public class RepoAccessDeniedException : ApplicationException;
