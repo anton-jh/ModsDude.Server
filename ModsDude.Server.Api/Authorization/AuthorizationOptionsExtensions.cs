@@ -14,7 +14,7 @@ public static class AuthorizationOptionsExtensions
     {
         options.AddPolicy(scope, policy =>
         {
-            policy.RequireAssertion(context => VerifyScope(context, scope + "wer"));
+            policy.RequireAssertion(context => VerifyScope(context, scope));
         });
     }
 
