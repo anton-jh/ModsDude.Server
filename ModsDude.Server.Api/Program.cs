@@ -45,7 +45,8 @@ builder.Services
 
 builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
-    .AddScoped<IUserRepository, UserRepository>();
+    .AddScoped<IUserRepository, UserRepository>()
+    .AddScoped<IRepoRepository, RepoRepository>();
 
 builder.Services
     .AddDbContext<ApplicationDbContext>(options =>
