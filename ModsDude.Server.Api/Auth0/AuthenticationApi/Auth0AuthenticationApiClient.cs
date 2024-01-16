@@ -1,6 +1,4 @@
-﻿using ModsDude.Server.Api.Middleware.CreateUser;
-
-namespace ModsDude.Server.Api.Auth0.AuthenticationApi;
+﻿namespace ModsDude.Server.Api.Auth0.AuthenticationApi;
 
 public class Auth0AuthenticationApiClient
 {

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ModsDude.Server.Api.Middleware.CreateUser;
+namespace ModsDude.Server.Api.Auth0.AuthenticationApi;
 
 public record UserInfoResponseDto(
     [property: JsonPropertyName("name")] string Name,
