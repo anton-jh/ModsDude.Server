@@ -6,5 +6,5 @@ public class RepoMembership(UserId userId, RepoId repoId, RepoMembershipLevel le
 {
     public UserId UserId { get; } = userId;
     public RepoId RepoId { get; } = repoId;
-    public RepoMembershipLevel Level { get; } = level;
+    public RepoMembershipLevel Level { get; set; } = level;
 }

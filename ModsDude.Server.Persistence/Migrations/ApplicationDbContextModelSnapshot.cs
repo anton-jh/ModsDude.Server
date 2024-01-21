@@ -38,7 +38,7 @@ namespace ModsDude.Server.Persistence.Migrations
 
                     b.HasIndex("RepoId");
 
-                    b.ToTable("RepoMemberships");
+                    b.ToTable("RepoMemberships", (string)null);
                 });
 
             modelBuilder.Entity("ModsDude.Server.Domain.Repos.Repo", b =>
@@ -59,7 +59,7 @@ namespace ModsDude.Server.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Repos");
+                    b.ToTable("Repos", (string)null);
                 });
 
             modelBuilder.Entity("ModsDude.Server.Domain.Users.User", b =>
@@ -85,7 +85,7 @@ namespace ModsDude.Server.Persistence.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("ModsDude.Server.Domain.RepoMemberships.RepoMembership", b =>

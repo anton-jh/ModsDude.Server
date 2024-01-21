@@ -23,8 +23,8 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     }
 
 
-    public Task CommitAsync()
+    public Task CommitAsync(CancellationToken cancellationToken)
     {
-        return SaveChangesAsync();
+        return SaveChangesAsync(cancellationToken);
     }
 }

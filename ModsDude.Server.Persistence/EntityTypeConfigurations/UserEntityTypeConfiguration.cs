@@ -15,5 +15,7 @@ internal class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
         builder.Property(x => x.Username)
             .HasValueOfConversion<string, Username>();
         builder.HasIndex(x => x.Username).IsUnique();
+
+        builder.HasMany(x => x.RepoMemberships).WithOne().HasForeignKey(x => x.UserId);
     }
 }

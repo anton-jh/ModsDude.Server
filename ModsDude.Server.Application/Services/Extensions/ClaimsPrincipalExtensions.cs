@@ -8,7 +8,7 @@ public static class ClaimsPrincipalExtensions
 {
     public static UserId GetUserId(this ClaimsPrincipal claimsPrincipal)
     {
-        var value = (claimsPrincipal.FindFirst(ClaimTypes.NameIdentifier)?.Value)
+        var value = (claimsPrincipal.FindFirst("sub")?.Value)
             ?? throw new NotAuthenticatedException();
 
         try
