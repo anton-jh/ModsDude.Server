@@ -9,7 +9,7 @@ using ModsDude.Server.Application.Services.Extensions;
 using ModsDude.Server.Domain.Repos;
 using System.Diagnostics;
 
-namespace ModsDude.Server.Api.Endpoints.Repos;
+namespace ModsDude.Server.Api.Endpoints.Repos.Create;
 
 public class CreateRepoEndpoint(
     ISender sender,
