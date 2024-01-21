@@ -20,6 +20,10 @@ public static class AuthorizationOptionsExtensions
 
     private static bool VerifyScope(AuthorizationHandlerContext context, string scope)
     {
+        if (context.User.Identity?.IsAuthenticated == false)
+        {
+            return false;
+        }
         var scopeClaim = context.User.Claims.FirstOrDefault(claim => claim.Type == "scope");
         if (scopeClaim is null)
         {

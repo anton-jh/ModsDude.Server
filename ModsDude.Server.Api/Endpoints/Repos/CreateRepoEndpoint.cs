@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ModsDude.Server.Api.Authorization;
+using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Domain.Repos;
 using System.Diagnostics;
@@ -10,7 +11,8 @@ using System.Diagnostics;
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
 public class CreateRepoEndpoint(
-    ISender sender)
+    ISender sender,
+    IUnitOfWork unitOfWork)
     : EndpointBaseAsync
         .WithRequest<CreateRepoRequest>
         .WithActionResult<RepoDto>
@@ -24,11 +26,17 @@ public class CreateRepoEndpoint(
 
         var result = await sender.Send(new CreateRepoCommand(name, serializedAdapter), cancellationToken);
 
-        return result switch
+        switch (result)
         {
-            CreateRepoResult.Ok ok => Ok(new RepoDto(ok.Repo.Name.Value, ok.Repo.Adapter.Value)),
-            CreateRepoResult.NameTaken => Conflict(),
-            _ => throw new UnreachableException()
-        };
+            case CreateRepoResult.Ok ok:
+                await unitOfWork.CommitAsync();
+                return Ok(new RepoDto(ok.Repo.Name.Value, ok.Repo.Adapter.Value));
+
+            case CreateRepoResult.NameTaken:
+                return Conflict();
+
+            default:
+                throw new UnreachableException();
+        }
     }
 }

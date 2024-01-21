@@ -17,7 +17,7 @@ public class CreateRepoHandler(
         }
 
         var repo = new Repo(request.Name, request.Adapter, timeService.Now());
-        repoRepository.SaveNewRepo(repo);
+        repoRepository.AddNewRepo(repo);
 
         return new CreateRepoResult.Ok(repo);
     }

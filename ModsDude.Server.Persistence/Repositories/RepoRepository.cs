@@ -11,7 +11,7 @@ public class RepoRepository(ApplicationDbContext dbContext) : IRepoRepository
         return dbContext.Repos.AnyAsync(x => x.Name == name, cancellationToken);
     }
 
-    public void SaveNewRepo(Repo repo)
+    public void AddNewRepo(Repo repo)
     {
         dbContext.Repos.Add(repo);
     }

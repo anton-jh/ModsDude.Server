@@ -14,5 +14,8 @@ internal class RepoEntityTypeConfiguration : IEntityTypeConfiguration<Repo>
 
         builder.Property(x => x.Name)
             .HasValueOfConversion<string, RepoName>();
+        builder.Property(x => x.Adapter)
+            .HasValueOfConversion<string, SerializedAdapter>();
+        builder.Property(x => x.Created);
     }
 }
