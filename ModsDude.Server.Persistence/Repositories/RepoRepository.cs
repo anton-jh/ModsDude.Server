@@ -15,4 +15,14 @@ public class RepoRepository(ApplicationDbContext dbContext) : IRepoRepository
     {
         dbContext.Repos.Add(repo);
     }
+
+    public async Task<Repo?> GetById(RepoId repoId)
+    {
+        return await dbContext.Repos.FindAsync(repoId);
+    }
+
+    public void Delete(Repo repo)
+    {
+        dbContext.Repos.Remove(repo);
+    }
 }
