@@ -6,7 +6,6 @@ using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Repos;
-using ModsDude.Server.Application.Services.Extensions;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;

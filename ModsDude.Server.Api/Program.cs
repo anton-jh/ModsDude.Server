@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Auth0.AuthenticationApi;
 using ModsDude.Server.Api.Authorization;
-using ModsDude.Server.Api.Middleware.CreateUser;
+using ModsDude.Server.Api.Middleware.UserLoading;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;

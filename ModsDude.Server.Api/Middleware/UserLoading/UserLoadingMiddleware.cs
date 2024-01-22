@@ -4,7 +4,7 @@ using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 using System.IdentityModel.Tokens.Jwt;
 
-namespace ModsDude.Server.Api.Middleware.CreateUser;
+namespace ModsDude.Server.Api.Middleware.UserLoading;
 
 public class UserLoadingMiddleware(
     ApplicationDbContext dbContext,

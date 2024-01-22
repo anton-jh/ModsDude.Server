@@ -3,7 +3,7 @@ using ModsDude.Server.Domain.Exceptions;
 using ModsDude.Server.Domain.Users;
 using System.Security.Claims;
 
-namespace ModsDude.Server.Application.Services.Extensions;
+namespace ModsDude.Server.Api.Authorization;
 public static class ClaimsPrincipalExtensions
 {
     public static UserId GetUserId(this ClaimsPrincipal claimsPrincipal)
