@@ -11,6 +11,11 @@ public class RepoRepository(ApplicationDbContext dbContext) : IRepoRepository
         return dbContext.Repos.AnyAsync(x => x.Name == name, cancellationToken);
     }
 
+    public Task<bool> CheckNameIsTaken(RepoName name, RepoId except, CancellationToken cancellationToken)
+    {
+        return dbContext.Repos.AnyAsync(x => x.Name == name && x.Id != except, cancellationToken);
+    }
+
     public void AddNewRepo(Repo repo)
     {
         dbContext.Repos.Add(repo);

@@ -42,7 +42,7 @@ public class RepoController(
         throw new UnreachableException();
     }
 
-    [HttpGet("my-repos")]
+    [HttpGet]
     public async Task<IEnumerable<RepoMembershipDto>> GetMyRepos(CancellationToken cancellationToken)
     {
         var userId = HttpContext.User.GetUserId();
@@ -64,7 +64,7 @@ public class RepoController(
         return dtos;
     }
 
-    [HttpPost("{id:guid}/update")]
+    [HttpPut("{id:guid}")]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
         var parsedId = RepoId.From(id);

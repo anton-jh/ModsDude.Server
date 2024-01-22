@@ -22,7 +22,7 @@ public class UpdateRepoHandler(
 {
     public async Task<UpdateRepoResult> Handle(UpdateRepoCommand request, CancellationToken cancellationToken)
     {
-        if (await repoRepository.CheckNameIsTaken(request.Name, cancellationToken))
+        if (await repoRepository.CheckNameIsTaken(request.Name, request.Id, cancellationToken))
         {
             return new UpdateRepoResult.NameTaken();
         }
