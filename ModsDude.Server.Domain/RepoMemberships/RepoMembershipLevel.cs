@@ -42,7 +42,17 @@ public record RepoMembershipLevel
 
     public static bool operator >(RepoMembershipLevel a, RepoMembershipLevel b)
     {
-        return a != b && b < a;
+        return a != b && !(b < a);
+    }
+
+    public static bool operator >=(RepoMembershipLevel a, RepoMembershipLevel b)
+    {
+        return !(a < b);
+    }
+
+    public static bool operator <=(RepoMembershipLevel a, RepoMembershipLevel b)
+    {
+        return (a < b) || a == b;
     }
 
 

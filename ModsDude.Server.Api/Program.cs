@@ -1,9 +1,12 @@
+using MediatR;
+using MediatR.Pipeline;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Auth0.AuthenticationApi;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Middleware.CreateUser;
 using ModsDude.Server.Application;
+using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
@@ -22,7 +25,12 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services
     .AddMediatR(config =>
-        config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>());
+    {
+        config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>();
+        config.AutoRegisterRequestProcessors = true;
+    });
+builder.Services
+    .AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPreProcessorBehavior<,>));
 
 builder.Services
     .AddAuthentication(options =>
@@ -45,7 +53,8 @@ builder.Services.AddScoped<UserLoadingMiddleware>();
 builder.Services.AddHttpClient<Auth0AuthenticationApiClient>();
 
 builder.Services
-    .AddSingleton<ITimeService, TimeService>();
+    .AddSingleton<ITimeService, TimeService>()
+    .AddTransient<IRepoAuthorizationService, RepoAuthorizationService>();   
 
 builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()

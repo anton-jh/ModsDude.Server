@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
+using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Application.Services.Extensions;
+using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
 using System.Diagnostics;
@@ -17,6 +19,7 @@ namespace ModsDude.Server.Api.Endpoints.Repos;
 public class RepoController(
     ISender sender,
     IUnitOfWork unitOfWork,
+    IRepoAuthorizationService repoAuthorizationService,
     ApplicationDbContext dbContext)
     : ControllerBase
 {
@@ -67,10 +70,16 @@ public class RepoController(
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
-        var parsedId = RepoId.From(id);
+        var repoId = RepoId.From(id);
+
+        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoId, RepoMembershipLevel.Admin, cancellationToken))
+        {
+            return Forbid();
+        }
+
         var name = RepoName.From(request.Name);
 
-        var result = await sender.Send<UpdateRepoResult>(new UpdateRepoCommand(parsedId, name, HttpContext.User), cancellationToken);
+        var result = await sender.Send(new UpdateRepoCommand(repoId, name, HttpContext.User), cancellationToken);
 
         switch (result)
         {
@@ -90,9 +99,14 @@ public class RepoController(
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> DeleteRepo(Guid id, CancellationToken cancellationToken)
     {
-        var parsedId = RepoId.From(id);
+        var repoId = RepoId.From(id);
 
-        var result = await sender.Send<DeleteRepoResult>(new DeleteRepoCommand(parsedId, HttpContext.User), cancellationToken);
+        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoId, RepoMembershipLevel.Admin, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var result = await sender.Send(new DeleteRepoCommand(repoId, HttpContext.User), cancellationToken);
 
         switch (result)
         {

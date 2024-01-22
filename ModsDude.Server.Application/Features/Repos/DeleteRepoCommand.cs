@@ -1,12 +1,11 @@
 ﻿using MediatR;
-using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using System.Security.Claims;
 
 namespace ModsDude.Server.Application.Features.Repos;
-public record DeleteRepoCommand(RepoId Id, ClaimsPrincipal ClaimsPrincipal) : IRepoAuthorizedRequest<DeleteRepoResult>
+public record DeleteRepoCommand(RepoId Id, ClaimsPrincipal ClaimsPrincipal) : IRequest<DeleteRepoResult>
 {
     public RepoMembershipLevel MinimumMembershipLevel => RepoMembershipLevel.Admin;
 
