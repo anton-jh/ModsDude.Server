@@ -17,7 +17,7 @@ namespace ModsDude.Server.Api.Endpoints.Repos;
 [ApiController]
 [Route("repos")]
 public class RepoController(
-    ISender sender,
+    IRepoService repoService,
     IUnitOfWork unitOfWork,
     IRepoAuthorizationService repoAuthorizationService,
     ApplicationDbContext dbContext)
@@ -31,7 +31,7 @@ public class RepoController(
         var name = RepoName.From(request.Name);
         var serializedAdapter = SerializedAdapter.From(request.SerializedAdapter);
 
-        var result = await sender.Send(new CreateRepoCommand(name, serializedAdapter, userId), cancellationToken);
+        var result = await repoService.CreateRepo(name, serializedAdapter, userId, cancellationToken);
 
         switch (result)
         {
@@ -79,7 +79,7 @@ public class RepoController(
 
         var name = RepoName.From(request.Name);
 
-        var result = await sender.Send(new UpdateRepoCommand(repoId, name, HttpContext.User), cancellationToken);
+        var result = await repoService.UpdateRepo(repoId, name, cancellationToken);
 
         switch (result)
         {
@@ -106,7 +106,7 @@ public class RepoController(
             return Forbid();
         }
 
-        var result = await sender.Send(new DeleteRepoCommand(repoId, HttpContext.User), cancellationToken);
+        var result = await repoService.DeleteRepo(repoId, cancellationToken);
 
         switch (result)
         {

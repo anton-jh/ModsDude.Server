@@ -8,6 +8,7 @@ using ModsDude.Server.Api.Middleware.CreateUser;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
+using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.RepoMemberships;
@@ -27,10 +28,7 @@ builder.Services
     .AddMediatR(config =>
     {
         config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>();
-        config.AutoRegisterRequestProcessors = true;
     });
-builder.Services
-    .AddTransient(typeof(IPipelineBehavior<,>), typeof(RequestPreProcessorBehavior<,>));
 
 builder.Services
     .AddAuthentication(options =>
@@ -54,7 +52,10 @@ builder.Services.AddHttpClient<Auth0AuthenticationApiClient>();
 
 builder.Services
     .AddSingleton<ITimeService, TimeService>()
-    .AddTransient<IRepoAuthorizationService, RepoAuthorizationService>();   
+    .AddTransient<IRepoAuthorizationService, RepoAuthorizationService>();
+
+builder.Services
+    .AddScoped<IRepoService, RepoService>();
 
 builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
