@@ -8,13 +8,9 @@ internal class RepoEntityTypeConfiguration : IEntityTypeConfiguration<Repo>
     public void Configure(EntityTypeBuilder<Repo> builder)
     {
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Id)
-            .HasConversion(x => x.Value, x => new RepoId(x));
 
-        builder.Property(x => x.Name)
-            .HasConversion(x => x.Value, x => new(x));
-        builder.Property(x => x.Adapter)
-            .HasConversion(x => x.Value, x => new(x));
+        builder.Property(x => x.Name);
+        builder.Property(x => x.Adapter);
         builder.Property(x => x.Created);
     }
 }

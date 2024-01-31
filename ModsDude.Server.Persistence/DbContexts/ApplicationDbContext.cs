@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Application.Dependencies;
+using ModsDude.Server.Domain;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Domain.Users;
+using ModsDude.Server.Persistence.Extensions;
 
 namespace ModsDude.Server.Persistence.DbContexts;
 public class ApplicationDbContext(DbContextOptions options) : DbContext(options), IUnitOfWork
@@ -14,7 +16,7 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
     {
-
+        configurationBuilder.ConfigureValueObjectConversionsFromAssembly(typeof(DomainAssemblyMarker).Assembly);
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
