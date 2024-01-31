@@ -21,7 +21,7 @@ public class RepoController(
     ApplicationDbContext dbContext)
     : ControllerBase
 {
-    [HttpPost("create")]
+    [HttpPost]
     [Authorize(Scopes.Repo.Create)]
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
