@@ -13,7 +13,7 @@ public static class ClaimsPrincipalExtensions
 
         try
         {
-            return UserId.From(value);
+            return new UserId(value);
         }
         catch (DomainValidationException)
         {

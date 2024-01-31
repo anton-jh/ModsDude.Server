@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ModsDude.Server.Domain.Common;
 using System.Linq.Expressions;
-using ValueOf;
 
 namespace ModsDude.Server.Persistence.Extensions;
 internal static class EntityTypeBuilderExtensions

@@ -1,5 +1,3 @@
-using MediatR;
-using MediatR.Pipeline;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Auth0.AuthenticationApi;
@@ -29,6 +27,9 @@ builder.Services
     {
         config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>();
     });
+
+builder.Services
+    .AddOpenApiDocument();
 
 builder.Services
     .AddAuthentication(options =>
@@ -71,6 +72,12 @@ builder.Services
 
 var app = builder.Build();
 
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseOpenApi();
+    app.UseSwaggerUi();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();

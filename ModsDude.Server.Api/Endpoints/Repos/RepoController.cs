@@ -1,5 +1,4 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
@@ -27,8 +26,8 @@ public class RepoController(
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
         var userId = HttpContext.User.GetUserId();
-        var name = RepoName.From(request.Name);
-        var serializedAdapter = SerializedAdapter.From(request.SerializedAdapter);
+        var name = new RepoName(request.Name);
+        var serializedAdapter = new SerializedAdapter(request.SerializedAdapter);
 
         var result = await repoService.CreateRepo(name, serializedAdapter, userId, cancellationToken);
 
@@ -69,14 +68,14 @@ public class RepoController(
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
-        var repoId = RepoId.From(id);
+        var repoId = new RepoId(id);
 
         if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoId, RepoMembershipLevel.Admin, cancellationToken))
         {
             return Forbid();
         }
 
-        var name = RepoName.From(request.Name);
+        var name = new RepoName(request.Name);
 
         var result = await repoService.UpdateRepo(repoId, name, cancellationToken);
 
@@ -98,7 +97,7 @@ public class RepoController(
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> DeleteRepo(Guid id, CancellationToken cancellationToken)
     {
-        var repoId = RepoId.From(id);
+        var repoId = new RepoId(id);
 
         if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoId, RepoMembershipLevel.Admin, cancellationToken))
         {

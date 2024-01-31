@@ -1,6 +1,6 @@
-﻿using ModsDude.Server.Domain.RepoMemberships;
+﻿using ModsDude.Server.Domain.Common;
+using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
-using ValueOf;
 
 namespace ModsDude.Server.Domain.Users;
 public class User(UserId id, Username username, DateTime created)
@@ -38,4 +38,5 @@ public class User(UserId id, Username username, DateTime created)
     }
 }
 
-public class UserId : ValueOf<string, UserId>;
+public readonly record struct UserId(string Value);
+public readonly record struct Username(string Value);

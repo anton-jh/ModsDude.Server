@@ -23,7 +23,7 @@ public class UserLoadingMiddleware(
             return;
         }
 
-        var userId = UserId.From(subClaim.Value);
+        var userId = new UserId(subClaim.Value);
         var existingUser = await dbContext.Users.FindAsync(userId);
 
         if (existingUser is not null)
@@ -40,7 +40,7 @@ public class UserLoadingMiddleware(
 
         var userInfo = await authenticationApiClient.GetUserInfo();
 
-        var username = Username.From(userInfo.Name);
+        var username = new Username(userInfo.Name);
         var newUser = new User(userId, username, timeService.Now());
 
         dbContext.Users.Add(newUser);

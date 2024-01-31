@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using ModsDude.Server.Domain.Users;
-using ModsDude.Server.Persistence.Extensions;
 
 namespace ModsDude.Server.Persistence.EntityTypeConfigurations;
 internal class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
@@ -10,10 +9,10 @@ internal class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
     {
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Id)
-            .HasValueOfConversion<string, UserId>();
+            .HasConversion(x => x.Value, x => new(x));
 
         builder.Property(x => x.Username)
-            .HasValueOfConversion<string, Username>();
+            .HasConversion(x => x.Value, x => new(x));
         builder.HasIndex(x => x.Username).IsUnique();
 
         builder.HasMany(x => x.RepoMemberships).WithOne().HasForeignKey(x => x.UserId);
