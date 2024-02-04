@@ -11,14 +11,14 @@ public class RepoService(
     ITimeService timeService,
     IUnitOfWork unitOfWork) : IRepoService
 {
-    public async Task<CreateRepoResult> CreateRepo(RepoName name, SerializedAdapter adapter, UserId createdBy, CancellationToken cancellationToken)
+    public async Task<CreateRepoResult> CreateRepo(RepoName name, AdapterScript? modAdapter, AdapterScript? savegameAdapter, UserId createdBy, CancellationToken cancellationToken)
     {
         if (await repoRepository.CheckNameIsTaken(name, cancellationToken))
         {
             return new CreateRepoResult.NameTaken();
         }
 
-        var repo = new Repo(name, adapter, timeService.Now());
+        var repo = new Repo(name, modAdapter, savegameAdapter, timeService.Now());
         repoRepository.AddNewRepo(repo);
 
         var user = await userRepository.GetByIdAsync(createdBy, cancellationToken)

@@ -2,5 +2,6 @@
 
 public record CreateRepoRequest(
     string Name,
-    string SerializedAdapter
+    string? ModAdapterScript,
+    string? SavegameAdapterScript
 );

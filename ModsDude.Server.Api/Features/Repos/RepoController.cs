@@ -25,11 +25,21 @@ public class RepoController(
     [Authorize(Scopes.Repo.Create)]
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
+        if (request.ModAdapterScript is null && request.SavegameAdapterScript is null)
+        {
+            return BadRequest("Cannot create repo with both mod- and savegame-adapters null");
+        }
+
         var userId = HttpContext.User.GetUserId();
         var name = new RepoName(request.Name);
-        var serializedAdapter = new SerializedAdapter(request.SerializedAdapter);
+        AdapterScript? modAdapter = request.ModAdapterScript is null
+            ? null
+            : new AdapterScript(request.ModAdapterScript);
+        AdapterScript? savegameAdapter = request.SavegameAdapterScript is null
+            ? null
+            : new AdapterScript(request.SavegameAdapterScript);
 
-        var result = await repoService.CreateRepo(name, serializedAdapter, userId, cancellationToken);
+        var result = await repoService.CreateRepo(name, modAdapter, savegameAdapter, userId, cancellationToken);
 
         switch (result)
         {
