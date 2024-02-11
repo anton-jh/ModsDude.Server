@@ -8,10 +8,9 @@ namespace ModsDude.Server.Application.Features.Repos;
 public class RepoService(
     IRepoRepository repoRepository,
     IUserRepository userRepository,
-    ITimeService timeService,
-    IUnitOfWork unitOfWork) : IRepoService
+    ITimeService timeService) : IRepoService
 {
-    public async Task<CreateRepoResult> CreateRepo(RepoName name, AdapterScript? modAdapter, AdapterScript? savegameAdapter, UserId createdBy, CancellationToken cancellationToken)
+    public async Task<CreateRepoResult> Create(RepoName name, AdapterScript? modAdapter, AdapterScript? savegameAdapter, UserId createdBy, CancellationToken cancellationToken)
     {
         if (await repoRepository.CheckNameIsTaken(name, cancellationToken))
         {
@@ -29,7 +28,7 @@ public class RepoService(
         return new CreateRepoResult.Ok(repo);
     }
 
-    public async Task<UpdateRepoResult> UpdateRepo(RepoId id, RepoName name, CancellationToken cancellationToken)
+    public async Task<UpdateRepoResult> Update(RepoId id, RepoName name, CancellationToken cancellationToken)
     {
         if (await repoRepository.CheckNameIsTaken(name, id, cancellationToken))
         {
@@ -47,7 +46,7 @@ public class RepoService(
         return new UpdateRepoResult.Ok(repo);
     }
 
-    public async Task<DeleteRepoResult> DeleteRepo(RepoId id, CancellationToken cancellationToken)
+    public async Task<DeleteRepoResult> Delete(RepoId id, CancellationToken cancellationToken)
     {
         var repo = await repoRepository.GetById(id);
         if (repo is null)
@@ -56,7 +55,6 @@ public class RepoService(
         }
 
         repoRepository.Delete(repo);
-        await unitOfWork.CommitAsync(cancellationToken);
 
         return new DeleteRepoResult.Ok();
     }
@@ -69,13 +67,13 @@ public abstract record CreateRepoResult()
     public record NameTaken() : CreateRepoResult;
 }
 
-public record DeleteRepoResult
+public abstract record DeleteRepoResult
 {
     public record Ok : DeleteRepoResult;
     public record NotFound : DeleteRepoResult;
 }
 
-public record UpdateRepoResult
+public abstract record UpdateRepoResult
 {
     public record Ok(Repo Repo) : UpdateRepoResult;
     public record NotFound : UpdateRepoResult;

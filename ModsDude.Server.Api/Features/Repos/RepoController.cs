@@ -13,7 +13,6 @@ using System.Diagnostics;
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
 [ApiController]
-[Route("repos")]
 public class RepoController(
     IRepoService repoService,
     IUnitOfWork unitOfWork,
@@ -21,7 +20,7 @@ public class RepoController(
     ApplicationDbContext dbContext)
     : ControllerBase
 {
-    [HttpPost]
+    [HttpPost("/repos")]
     [Authorize(Scopes.Repo.Create)]
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
@@ -39,7 +38,7 @@ public class RepoController(
             ? null
             : new AdapterScript(request.SavegameAdapterScript);
 
-        var result = await repoService.CreateRepo(name, modAdapter, savegameAdapter, userId, cancellationToken);
+        var result = await repoService.Create(name, modAdapter, savegameAdapter, userId, cancellationToken);
 
         switch (result)
         {
@@ -53,7 +52,7 @@ public class RepoController(
         throw new UnreachableException();
     }
 
-    [HttpGet]
+    [HttpGet("/repos")]
     public async Task<IEnumerable<RepoMembershipDto>> GetMyRepos(CancellationToken cancellationToken)
     {
         var userId = HttpContext.User.GetUserId();
@@ -75,7 +74,7 @@ public class RepoController(
         return dtos;
     }
 
-    [HttpPut("{id:guid}")]
+    [HttpPut("/repos/{id:guid}")]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
@@ -87,7 +86,7 @@ public class RepoController(
 
         var name = new RepoName(request.Name);
 
-        var result = await repoService.UpdateRepo(repoId, name, cancellationToken);
+        var result = await repoService.Update(repoId, name, cancellationToken);
 
         switch (result)
         {
@@ -104,7 +103,7 @@ public class RepoController(
         throw new UnreachableException();
     }
 
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("/repos/{id:guid}")]
     public async Task<ActionResult> DeleteRepo(Guid id, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
@@ -114,7 +113,7 @@ public class RepoController(
             return Forbid();
         }
 
-        var result = await repoService.DeleteRepo(repoId, cancellationToken);
+        var result = await repoService.Delete(repoId, cancellationToken);
 
         switch (result)
         {

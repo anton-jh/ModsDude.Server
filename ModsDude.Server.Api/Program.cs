@@ -10,6 +10,7 @@ using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.RepoMemberships;
+using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 using ModsDude.Server.Persistence.Repositories;

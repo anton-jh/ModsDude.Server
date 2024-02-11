@@ -1,7 +1,11 @@
 ﻿namespace ModsDude.Server.Domain.Repos;
-public class Repo(RepoName name, AdapterScript? modAdapter, AdapterScript? savegameAdapter, DateTime created)
+public class Repo(
+    RepoName name,
+    AdapterScript? modAdapter,
+    AdapterScript? savegameAdapter,
+    DateTime created)
 {
-    public RepoId Id { get; private set; } = new(Guid.NewGuid());
+    public RepoId Id { get; init; } = new(Guid.NewGuid());
 
     public RepoName Name { get; set; } = name;
     public AdapterScript? ModAdapter { get; } = modAdapter;
