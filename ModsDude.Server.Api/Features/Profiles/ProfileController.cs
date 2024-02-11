@@ -21,14 +21,16 @@ public class ProfileController(
     : ControllerBase
 {
     [HttpPost("{repoId:guid}/profiles")]
-    public async Task<ActionResult> CreateProfile(RepoId repoId, ProfileName name, CancellationToken cancellationToken)
+    public async Task<ActionResult> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoId, RepoMembershipLevel.Member, cancellationToken))
+        var repoIdParsed = new RepoId(repoId);
+
+        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
 
-        var result = await profileService.Create(repoId, name, cancellationToken);
+        var result = await profileService.Create(repoIdParsed, new ProfileName(request.Name), cancellationToken);
 
         switch (result)
         {
@@ -43,22 +45,73 @@ public class ProfileController(
     }
 
     [HttpGet("{repoId:guid}/profiles")]
-    public async Task<ActionResult> GetProfiles(RepoId /*todo can i make this work??*/ repoId, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetAll(Guid repoId, CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoId, RepoMembershipLevel.Guest, cancellationToken))
+        var repoIdParsed = new RepoId(repoId);
+
+        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Guest, cancellationToken))
         {
             return Forbid();
         }
 
         var profiles = await dbContext.Profiles
-            .Where(x => x.RepoId == repoId)
+            .Where(x => x.RepoId == repoIdParsed)
             .ToListAsync(cancellationToken);
 
         var dtos = profiles.Select(ProfileDto.FromProfile);
 
         return Ok(dtos);
     }
+
+    [HttpPut("{repoId:guid}/profiles/{profileId:guid}")]
+    public async Task<ActionResult> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
+    {
+        var repoIdParsed = new RepoId(repoId);
+        var profileIdParsed = new ProfileId(profileId);
+
+        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Member, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var result = await profileService.Update(profileIdParsed, new ProfileName(request.Name), cancellationToken);
+
+        switch (result)
+        {
+            case UpdateProfileResult.NotFound:
+                return NotFound();
+
+            case UpdateProfileResult.NameTaken:
+                return Conflict();
+
+            case UpdateProfileResult.Ok ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok(ProfileDto.FromProfile(ok.Profile));
+        }
+        throw new UnreachableException();
+    }
+
+    [HttpDelete("{repoId:guid}/profiles/{profileId:guid}")]
+    public async Task<ActionResult> Delete(Guid repoId, Guid profileId, CancellationToken cancellationToken)
+    {
+        var repoIdParsed = new RepoId(repoId);
+        var profileIdParsed = new ProfileId(profileId);
+
+        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Member, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var result = await profileService.Delete(profileIdParsed, cancellationToken);
+
+        switch (result)
+        {
+            case DeleteProfileResult.NotFound:
+                return NotFound();
+
+            case DeleteProfileResult.Ok:
+                return Ok();
+        }
+        throw new UnreachableException();
+    }
 }
-
-
-// todo: impl repository, more?

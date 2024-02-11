@@ -9,7 +9,7 @@ public class ProfileService(
 {
     public async Task<CreateProfileResult> Create(RepoId repoId, ProfileName name, CancellationToken cancellationToken)
     {
-        if (await profileRepository.CheckNameIsTaken(name, cancellationToken))
+        if (await profileRepository.CheckNameIsTaken(repoId, name, cancellationToken))
         {
             return new CreateProfileResult.NameTaken();
         }
@@ -27,7 +27,7 @@ public class ProfileService(
             return new UpdateProfileResult.NameTaken();
         }
 
-        var profile = await profileRepository.GetById(id);
+        var profile = await profileRepository.GetById(id, cancellationToken);
         if (profile is null)
         {
             return new UpdateProfileResult.NotFound();
@@ -40,7 +40,7 @@ public class ProfileService(
 
     public async Task<DeleteProfileResult> Delete(ProfileId id, CancellationToken cancellationToken)
     {
-        var profile = await profileRepository.GetById(id);
+        var profile = await profileRepository.GetById(id, cancellationToken);
         if (profile is null)
         {
             return new DeleteProfileResult.NotFound();
