@@ -21,7 +21,7 @@ public class ProfileController(
     : ControllerBase
 {
     [HttpPost("{repoId:guid}/profiles")]
-    public async Task<ActionResult> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProfileDto>> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
     {
         var repoIdParsed = new RepoId(repoId);
 
@@ -45,7 +45,7 @@ public class ProfileController(
     }
 
     [HttpGet("{repoId:guid}/profiles")]
-    public async Task<ActionResult> GetAll(Guid repoId, CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<ProfileDto>>> GetAll(Guid repoId, CancellationToken cancellationToken)
     {
         var repoIdParsed = new RepoId(repoId);
 
@@ -64,7 +64,7 @@ public class ProfileController(
     }
 
     [HttpPut("{repoId:guid}/profiles/{profileId:guid}")]
-    public async Task<ActionResult> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProfileDto>> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
     {
         var repoIdParsed = new RepoId(repoId);
         var profileIdParsed = new ProfileId(profileId);
@@ -116,3 +116,4 @@ public class ProfileController(
         throw new UnreachableException();
     }
 }
+g
