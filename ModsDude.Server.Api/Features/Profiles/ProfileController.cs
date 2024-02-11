@@ -110,6 +110,7 @@ public class ProfileController(
                 return NotFound();
 
             case DeleteProfileResult.Ok:
+                await unitOfWork.CommitAsync(cancellationToken);
                 return Ok();
         }
         throw new UnreachableException();
