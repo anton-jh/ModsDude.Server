@@ -6,9 +6,11 @@ using ModsDude.Server.Api.Middleware.UserLoading;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
+using ModsDude.Server.Application.Features.Profiles;
 using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
+using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Domain.Users;
@@ -57,12 +59,14 @@ builder.Services
     .AddTransient<IRepoAuthorizationService, RepoAuthorizationService>();
 
 builder.Services
-    .AddScoped<IRepoService, RepoService>();
+    .AddScoped<IRepoService, RepoService>()
+    .AddScoped<IProfileService, ProfileService>();
 
 builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
     .AddScoped<IUserRepository, UserRepository>()
-    .AddScoped<IRepoRepository, RepoRepository>();
+    .AddScoped<IRepoRepository, RepoRepository>()
+    .AddScoped<IProfileRepository, ProfileRepository>();
 
 builder.Services
     .AddDbContext<ApplicationDbContext>(options =>

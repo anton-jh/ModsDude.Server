@@ -14,7 +14,7 @@ namespace ModsDude.Server.Api.Features.Profiles;
 
 [ApiController]
 public class ProfileController(
-    RepoAuthorizationService repoAuthorizationService,
+    IRepoAuthorizationService repoAuthorizationService,
     IProfileService profileService,
     IUnitOfWork unitOfWork,
     ApplicationDbContext dbContext)
