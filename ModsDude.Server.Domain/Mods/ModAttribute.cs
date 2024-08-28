@@ -1,8 +1,8 @@
 ﻿namespace ModsDude.Server.Domain.Mods;
-public class ModProperty(
+public class ModAttribute(
     string key,
-    string value)
+    string? value = null)
 {
     public required string Key { get; init; } = key;
-    public required string Value { get; set; } = value;
+    public required string? Value { get; set; } = value;
 }

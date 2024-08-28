@@ -11,6 +11,8 @@ internal class ProfileEntityTypeConfiguration : IEntityTypeConfiguration<Profile
         builder.HasKey(x => x.Id);
         builder.HasOne<Repo>().WithMany().HasForeignKey(x => x.RepoId);
 
+        builder.OwnsMany(x => x.ModDependencies);
+
         builder.Property(x => x.Name);
         builder.Property(x => x.Created);
 

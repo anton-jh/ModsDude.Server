@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Domain;
+using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
@@ -14,6 +15,7 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public required DbSet<Repo> Repos { get; init; }
     public required DbSet<RepoMembership> RepoMemberships { get; init; }
     public required DbSet<Profile> Profiles { get; init; }
+    public required DbSet<Mod> Mods { get; init; }
 
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
