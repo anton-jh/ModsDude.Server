@@ -12,7 +12,7 @@ using ModsDude.Server.Persistence.DbContexts;
 namespace ModsDude.Server.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240828203231_Mods")]
+    [Migration("20240831170258_Mods")]
     partial class Mods
     {
         /// <inheritdoc />
@@ -34,6 +34,9 @@ namespace ModsDude.Server.Persistence.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset>("Created")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("Updated")
                         .HasColumnType("datetimeoffset");
 
                     b.HasKey("RepoId", "Id");
@@ -63,7 +66,13 @@ namespace ModsDude.Server.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("SequenceNumber")
+                        .HasColumnType("int");
+
                     b.HasKey("RepoId", "ModId", "Id");
+
+                    b.HasIndex("RepoId", "ModId", "SequenceNumber")
+                        .IsUnique();
 
                     b.ToTable("ModVersion");
                 });
@@ -226,29 +235,21 @@ namespace ModsDude.Server.Persistence.Migrations
                             b1.Property<Guid>("ProfileId")
                                 .HasColumnType("uniqueidentifier");
 
-                            b1.Property<int>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("int");
+                            b1.Property<Guid>("RepoId")
+                                .HasColumnType("uniqueidentifier");
 
-                            SqlServerPropertyBuilderExtensions.UseIdentityColumn(b1.Property<int>("Id"));
+                            b1.Property<string>("ModId")
+                                .HasColumnType("nvarchar(450)");
+
+                            b1.Property<string>("ModVersionId")
+                                .HasColumnType("nvarchar(450)");
 
                             b1.Property<bool>("LockVersion")
                                 .HasColumnType("bit");
 
-                            b1.Property<string>("ModVersionId")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(450)");
+                            b1.HasKey("ProfileId", "RepoId", "ModId", "ModVersionId");
 
-                            b1.Property<string>("ModVersionModId")
-                                .IsRequired()
-                                .HasColumnType("nvarchar(450)");
-
-                            b1.Property<Guid>("ModVersionRepoId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.HasKey("ProfileId", "Id");
-
-                            b1.HasIndex("ModVersionRepoId", "ModVersionModId", "ModVersionId");
+                            b1.HasIndex("RepoId", "ModId", "ModVersionId");
 
                             b1.ToTable("ModDependency");
 
@@ -257,7 +258,7 @@ namespace ModsDude.Server.Persistence.Migrations
 
                             b1.HasOne("ModsDude.Server.Domain.Mods.ModVersion", "ModVersion")
                                 .WithMany()
-                                .HasForeignKey("ModVersionRepoId", "ModVersionModId", "ModVersionId")
+                                .HasForeignKey("RepoId", "ModId", "ModVersionId")
                                 .OnDelete(DeleteBehavior.Cascade)
                                 .IsRequired();
 

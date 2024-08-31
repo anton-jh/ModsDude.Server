@@ -4,21 +4,58 @@ namespace ModsDude.Server.Domain.Mods;
 
 public class Mod
 {
-    private readonly List<ModVersion> _versions = [];
+    private readonly HashSet<ModVersion> _versions = [];
 
 
-    public required RepoId RepoId { get; init; }
-    public required ModId Id { get; init; }
+    /// <summary>
+    /// Only for ef core
+    /// </summary>
+    private Mod()
+    {
+    }
 
-    public IReadOnlyList<ModVersion> Versions => _versions;
+    public Mod(
+        RepoId repoId,
+        ModId id,
+        ModVersionId firstVersionId,
+        IReadOnlySet<ModAttribute> attributes,
+        DateTimeOffset timestamp,
+        string description,
+        string displayName)
+    {
+        RepoId = repoId;
+        Id = id;
+        Created = timestamp;
+        Updated = timestamp;
 
-    public required DateTimeOffset Created { get; init; }
+        AddVersion(
+            firstVersionId,
+            attributes,
+            timestamp,
+            description,
+            displayName);
+    }
 
+
+    public RepoId RepoId { get; init; } // can i get rid of this? should i? TODO
+    public ModId Id { get; init; }
+    public DateTimeOffset Created { get; private set; }
+    public DateTimeOffset Updated { get; private set; }
+
+    public IReadOnlySet<ModVersion> Versions => _versions;
+
+
+    public ModVersion GetLatestVersion()
+    {
+        return _versions
+            .OrderByDescending(x => x.SequenceNumber)
+            .First();
+    }
 
     public ModVersion AddVersion(
         ModVersionId id,
         IReadOnlySet<ModAttribute> attributes,
-        DateTimeOffset created,
+        DateTimeOffset timestamp,
         string description,
         string displayName)
     {
@@ -26,20 +63,96 @@ public class Mod
         {
             Id = id,
             Attributes = new(attributes),
-            Created = created,
+            Created = timestamp,
             Description = description,
             DisplayName = displayName,
-            Mod = this
+            Mod = this,
+            SequenceNumber = GetNextSequenceNumberForVersion()
         };
 
         _versions.Add(newVersion);
+        Updated = timestamp;
 
         return newVersion;
     }
 
-    public void RemoveVersion(ModVersionId id)
+    public ModVersion InsertVersion(
+        ModVersionId id,
+        IReadOnlySet<ModAttribute> attributes,
+        DateTimeOffset timestamp,
+        string description,
+        string displayName,
+        ModVersionId before)
     {
-        _versions.Remove(_versions.First(x => x.Id == id));
+        if (_versions.Any(x => x.Id == id))
+        {
+            throw new InvalidOperationException($"Cannot insert version with id '{id}'. A version with that id already exists");
+        }
+
+        var firstFollowing = _versions.FirstOrDefault(x => x.Id == before)
+            ?? throw new InvalidOperationException($"Cannot insert before version with id '{before}'. No such version exists");
+
+        var allFollowing = _versions.Where(x => x.SequenceNumber >= firstFollowing.SequenceNumber);
+
+        foreach (var version in allFollowing)
+        {
+            version.SequenceNumber++;
+        }
+
+        var newVersion = new ModVersion()
+        {
+            Id = id,
+            Attributes = new(attributes),
+            Created = timestamp,
+            Description = description,
+            DisplayName = displayName,
+            Mod = this,
+            SequenceNumber = firstFollowing.SequenceNumber - 1
+        };
+
+        _versions.Add(newVersion);
+        Updated = timestamp;
+
+        return newVersion;
+    }
+
+    public void RemoveVersion(ModVersionId versionId, DateTimeOffset timestamp)
+    {
+        var version = _versions.FirstOrDefault(x => x.Id == versionId)
+            ?? throw new InvalidOperationException($"Cannot remove version with id '{versionId}'. No such version exists");
+
+        RemoveVersion(version, timestamp);
+    }
+
+    public void RemoveVersion(ModVersion version, DateTimeOffset timestamp)
+    {
+        if (!_versions.Remove(version))
+        {
+            throw new InvalidOperationException($"Cannot remove version with id '{version.Id}'. No such version exists");
+        }
+
+        if (_versions.Count <= 1)
+        {
+            throw new InvalidOperationException($"Cannot remove only version of a Mod");
+        }
+
+        var newerVersions = _versions
+            .Where(x => x.SequenceNumber > version.SequenceNumber);
+
+        foreach (var newerVersion in newerVersions)
+        {
+            newerVersion.SequenceNumber--;
+        }
+
+        Updated = timestamp;
+    }
+
+
+    private int GetNextSequenceNumberForVersion()
+    {
+        return _versions.MaxBy(x => x.SequenceNumber)
+            ?.SequenceNumber
+            ?? 0;
     }
 }
 

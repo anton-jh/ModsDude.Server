@@ -11,5 +11,10 @@ internal class ModEntityTypeConfiguration : IEntityTypeConfiguration<Mod>
         builder.HasKey(x => new { x.RepoId, x.Id });
 
         builder.HasOne<Repo>().WithMany().HasForeignKey(x => x.RepoId);
+
+        builder.HasMany(x => x.Versions).WithOne(x => x.Mod).HasForeignKey(
+            ModVersionShadowProperties.RepoId,
+            ModVersionShadowProperties.ModId)
+            .IsRequired();
     }
 }

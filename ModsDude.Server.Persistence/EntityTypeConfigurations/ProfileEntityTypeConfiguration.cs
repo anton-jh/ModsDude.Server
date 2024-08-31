@@ -9,13 +9,36 @@ internal class ProfileEntityTypeConfiguration : IEntityTypeConfiguration<Profile
     public void Configure(EntityTypeBuilder<Profile> builder)
     {
         builder.HasKey(x => x.Id);
+
         builder.HasOne<Repo>().WithMany().HasForeignKey(x => x.RepoId);
 
-        builder.OwnsMany(x => x.ModDependencies);
+        builder.OwnsMany(x => x.ModDependencies, modDependency =>
+        {
+            modDependency.WithOwner().HasForeignKey(ModDependencyShadowProperties.ProfileId);
+
+            modDependency.HasOne(x => x.ModVersion).WithMany().HasForeignKey(
+                ModDependencyShadowProperties.RepoId,
+                ModDependencyShadowProperties.ModId,
+                ModDependencyShadowProperties.ModVersionId);
+
+            modDependency.HasKey(
+                ModDependencyShadowProperties.ProfileId,
+                ModDependencyShadowProperties.RepoId,
+                ModDependencyShadowProperties.ModId,
+                ModDependencyShadowProperties.ModVersionId);
+        });
 
         builder.Property(x => x.Name);
         builder.Property(x => x.Created);
 
         builder.HasIndex(x => new { x.RepoId, x.Name }).IsUnique();
     }
+}
+
+internal static class ModDependencyShadowProperties
+{
+    public const string ProfileId = "ProfileId";
+    public const string RepoId = "RepoId";
+    public const string ModId = "ModId";
+    public const string ModVersionId = "ModVersionId";
 }

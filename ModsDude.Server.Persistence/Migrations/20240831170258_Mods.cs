@@ -17,7 +17,8 @@ namespace ModsDude.Server.Persistence.Migrations
                 {
                     RepoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    Updated = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -37,6 +38,7 @@ namespace ModsDude.Server.Persistence.Migrations
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     RepoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ModId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    SequenceNumber = table.Column<int>(type: "int", nullable: false),
                     DisplayName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Created = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
@@ -80,19 +82,17 @@ namespace ModsDude.Server.Persistence.Migrations
                 columns: table => new
                 {
                     ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ModVersionRepoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ModVersionModId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RepoId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ModId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ModVersionId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     LockVersion = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ModDependency", x => new { x.ProfileId, x.Id });
+                    table.PrimaryKey("PK_ModDependency", x => new { x.ProfileId, x.RepoId, x.ModId, x.ModVersionId });
                     table.ForeignKey(
-                        name: "FK_ModDependency_ModVersion_ModVersionRepoId_ModVersionModId_ModVersionId",
-                        columns: x => new { x.ModVersionRepoId, x.ModVersionModId, x.ModVersionId },
+                        name: "FK_ModDependency_ModVersion_RepoId_ModId_ModVersionId",
+                        columns: x => new { x.RepoId, x.ModId, x.ModVersionId },
                         principalTable: "ModVersion",
                         principalColumns: new[] { "RepoId", "ModId", "Id" },
                         onDelete: ReferentialAction.Cascade);
@@ -105,9 +105,15 @@ namespace ModsDude.Server.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_ModDependency_ModVersionRepoId_ModVersionModId_ModVersionId",
+                name: "IX_ModDependency_RepoId_ModId_ModVersionId",
                 table: "ModDependency",
-                columns: new[] { "ModVersionRepoId", "ModVersionModId", "ModVersionId" });
+                columns: new[] { "RepoId", "ModId", "ModVersionId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ModVersion_RepoId_ModId_SequenceNumber",
+                table: "ModVersion",
+                columns: new[] { "RepoId", "ModId", "SequenceNumber" },
+                unique: true);
         }
 
         /// <inheritdoc />
