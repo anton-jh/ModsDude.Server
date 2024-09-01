@@ -139,8 +139,8 @@ public class ProfileController(
         throw new UnreachableException();
     }
 
-    [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
-    public async Task<ActionResult> UpdateModDependency(
+    [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")] // TODO add Authorize attributes where needed (probably everywhere)
+    public async Task<ActionResult> UpdateModDependency( // TODO: swagger shows return value as octet-stream...???
         Guid repoId,
         Guid profileId,
         string modId,
