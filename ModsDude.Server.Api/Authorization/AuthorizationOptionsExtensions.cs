@@ -20,7 +20,7 @@ public static class AuthorizationOptionsExtensions
 
     private static bool VerifyScope(AuthorizationHandlerContext context, string scope)
     {
-        if (context.User.Identity?.IsAuthenticated == false)
+        if (context.User.Identity?.IsAuthenticated != true)
         {
             return false;
         }

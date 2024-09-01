@@ -22,7 +22,7 @@ public class RepoController(
     : ControllerBase
 {
     [HttpPost("repos")]
-    [Authorize(Scopes.Repo.Create)]
+    [Authorize(Scopes.Repo.Create)] // TODO: is this used still? if so, check other controllers
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
         if (request.ModAdapterScript is null && request.SavegameAdapterScript is null)

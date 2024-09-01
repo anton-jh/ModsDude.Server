@@ -12,7 +12,7 @@ using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Features.Profiles;
 
-[ApiController]
+[ApiController] // TODO: versioning
 [Route("api")]
 public class ProfileController(
     IRepoAuthorizationService repoAuthorizationService,
