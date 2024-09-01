@@ -4,8 +4,8 @@ using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Profiles;
+using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Profiles;
-using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
 using System.Diagnostics;
@@ -13,24 +13,24 @@ using System.Diagnostics;
 namespace ModsDude.Server.Api.Features.Profiles;
 
 [ApiController]
+[Route("api")]
 public class ProfileController(
     IRepoAuthorizationService repoAuthorizationService,
     IProfileService profileService,
     IUnitOfWork unitOfWork,
     ApplicationDbContext dbContext)
-    : ControllerBase
+    : RepoAuthorizedController(
+        repoAuthorizationService)
 {
-    [HttpPost("{repoId:guid}/profiles")]
+    [HttpPost("repos/{repoId:guid}/profiles")]
     public async Task<ActionResult<ProfileDto>> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
     {
-        var repoIdParsed = new RepoId(repoId);
-
-        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Member, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
         {
             return Forbid();
         }
 
-        var result = await profileService.Create(repoIdParsed, new ProfileName(request.Name), cancellationToken);
+        var result = await profileService.Create(new RepoId(repoId), new ProfileName(request.Name), cancellationToken);
 
         switch (result)
         {
@@ -44,18 +44,16 @@ public class ProfileController(
         throw new UnreachableException();
     }
 
-    [HttpGet("{repoId:guid}/profiles")]
+    [HttpGet("repos/{repoId:guid}/profiles")]
     public async Task<ActionResult<IEnumerable<ProfileDto>>> GetAll(Guid repoId, CancellationToken cancellationToken)
     {
-        var repoIdParsed = new RepoId(repoId);
-
-        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Guest, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
         {
             return Forbid();
         }
 
         var profiles = await dbContext.Profiles
-            .Where(x => x.RepoId == repoIdParsed)
+            .Where(x => x.RepoId == new RepoId(repoId))
             .ToListAsync(cancellationToken);
 
         var dtos = profiles.Select(ProfileDto.FromProfile);
@@ -63,18 +61,15 @@ public class ProfileController(
         return Ok(dtos);
     }
 
-    [HttpPut("{repoId:guid}/profiles/{profileId:guid}")]
+    [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}")]
     public async Task<ActionResult<ProfileDto>> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        var repoIdParsed = new RepoId(repoId);
-        var profileIdParsed = new ProfileId(profileId);
-
-        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Member, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
         {
             return Forbid();
         }
 
-        var result = await profileService.Update(profileIdParsed, new ProfileName(request.Name), cancellationToken);
+        var result = await profileService.Update(new RepoId(repoId), new ProfileId(profileId), new ProfileName(request.Name), cancellationToken);
 
         switch (result)
         {
@@ -91,18 +86,15 @@ public class ProfileController(
         throw new UnreachableException();
     }
 
-    [HttpDelete("{repoId:guid}/profiles/{profileId:guid}")]
+    [HttpDelete("repos/{repoId:guid}/profiles/{profileId:guid}")]
     public async Task<ActionResult> Delete(Guid repoId, Guid profileId, CancellationToken cancellationToken)
     {
-        var repoIdParsed = new RepoId(repoId);
-        var profileIdParsed = new ProfileId(profileId);
-
-        if (!await repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), repoIdParsed, RepoMembershipLevel.Member, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
         {
             return Forbid();
         }
 
-        var result = await profileService.Delete(profileIdParsed, cancellationToken);
+        var result = await profileService.Delete(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
 
         switch (result)
         {
@@ -115,4 +107,111 @@ public class ProfileController(
         }
         throw new UnreachableException();
     }
+
+    [HttpPost("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies")]
+    public async Task<ActionResult> AddModDependency(Guid repoId, Guid profileId, AddModDependencyRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var result = await profileService.AddModDependency(
+            new RepoId(repoId),
+            new ProfileId(profileId),
+            new ModId(request.ModId),
+            new ModVersionId(request.VersionId),
+            request.LockVersion,
+            cancellationToken);
+        
+        switch (result)
+        {
+            case AddModDependencyResult.ProfileNotFound:
+                return NotFound($"No profile '{profileId}' found in repo '{repoId}'");
+
+            case AddModDependencyResult.ModNotFound:
+                return UnprocessableEntity($"No mod '{request.ModId}' found in repo '{repoId}'");
+
+            case AddModDependencyResult.Ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok();
+        }
+        throw new UnreachableException();
+    }
+
+    [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
+    public async Task<ActionResult> UpdateModDependency(
+        Guid repoId,
+        Guid profileId,
+        string modId,
+        UpdateModDependencyRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var result = await profileService.UpdateModDependency(
+            new RepoId(repoId),
+            new ProfileId(profileId),
+            new ModId(modId),
+            new ModVersionId(request.VersionId),
+            request.LockVersion,
+            cancellationToken);
+
+        switch (result)
+        {
+            case UpdateModDependencyResult.DependencyNotFound:
+                return NotFound($"No dependency on mod '{modId}' found in profile '{profileId}'");
+
+            case UpdateModDependencyResult.ModVersionNotFound:
+                return NotFound($"No version '{request.VersionId}' of mod '{modId}' found in repo '{repoId}'");
+
+            case UpdateModDependencyResult.ProfileNotFound:
+                return NotFound($"No profile '{profileId}' found in repo '{repoId}'");
+
+            case UpdateModDependencyResult.Ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok();
+        }
+        throw new UnreachableException();
+    }
+
+    [HttpDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
+    public async Task<ActionResult> DeleteModDependency(
+        Guid repoId,
+        Guid profileId,
+        string modId,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        {
+            return Forbid();
+        }
+
+        var result = await profileService.DeleteModDependency(
+            new RepoId(repoId),
+            new ProfileId(profileId),
+            new ModId(modId),
+            cancellationToken);
+
+        switch (result)
+        {
+            case DeleteModDependencyResult.ProfileNotFound:
+                return NotFound($"No profile '{profileId}' found in repo '{repoId}'");
+
+            case DeleteModDependencyResult.DependencyNotFound:
+                return NotFound($"No dependency on mod '{modId}' found in profile '{profileId}'");
+
+            case DeleteModDependencyResult.Ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok();
+        }
+        throw new UnreachableException();
+    }
 }
+
+public record UpdateProfileRequest(string Name);
+public record AddModDependencyRequest(string ModId, string VersionId, bool LockVersion);
+public record UpdateModDependencyRequest(string VersionId, bool LockVersion);

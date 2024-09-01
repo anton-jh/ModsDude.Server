@@ -11,6 +11,15 @@ namespace ModsDude.Server.Persistence.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Profiles",
+                table: "Profiles");
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Profiles",
+                table: "Profiles",
+                columns: new[] { "RepoId", "Id" });
+
             migrationBuilder.CreateTable(
                 name: "Mods",
                 columns: table => new
@@ -28,7 +37,7 @@ namespace ModsDude.Server.Persistence.Migrations
                         column: x => x.RepoId,
                         principalTable: "Repos",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -97,10 +106,10 @@ namespace ModsDude.Server.Persistence.Migrations
                         principalColumns: new[] { "RepoId", "ModId", "Id" },
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_ModDependency_Profiles_ProfileId",
-                        column: x => x.ProfileId,
+                        name: "FK_ModDependency_Profiles_RepoId_ProfileId",
+                        columns: x => new { x.RepoId, x.ProfileId },
                         principalTable: "Profiles",
-                        principalColumn: "Id",
+                        principalColumns: new[] { "RepoId", "Id" },
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -108,6 +117,11 @@ namespace ModsDude.Server.Persistence.Migrations
                 name: "IX_ModDependency_RepoId_ModId_ModVersionId",
                 table: "ModDependency",
                 columns: new[] { "RepoId", "ModId", "ModVersionId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ModDependency_RepoId_ProfileId",
+                table: "ModDependency",
+                columns: new[] { "RepoId", "ProfileId" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_ModVersion_RepoId_ModId_SequenceNumber",
@@ -130,6 +144,15 @@ namespace ModsDude.Server.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "Mods");
+
+            migrationBuilder.DropPrimaryKey(
+                name: "PK_Profiles",
+                table: "Profiles");
+
+            migrationBuilder.AddPrimaryKey(
+                name: "PK_Profiles",
+                table: "Profiles",
+                column: "Id");
         }
     }
 }

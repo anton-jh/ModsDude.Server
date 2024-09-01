@@ -1,4 +1,6 @@
-﻿namespace ModsDude.Server.Domain.Users;
+﻿using ModsDude.Server.Domain.Users;
+
+namespace ModsDude.Server.Application.Repositories;
 public interface IUserRepository
 {
     public Task<User?> GetByIdAsync(UserId userId, CancellationToken cancellationToken = default);

@@ -12,7 +12,7 @@ using ModsDude.Server.Persistence.DbContexts;
 namespace ModsDude.Server.Persistence.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240831170258_Mods")]
+    [Migration("20240901163503_Mods")]
     partial class Mods
     {
         /// <inheritdoc />
@@ -79,6 +79,9 @@ namespace ModsDude.Server.Persistence.Migrations
 
             modelBuilder.Entity("ModsDude.Server.Domain.Profiles.Profile", b =>
                 {
+                    b.Property<Guid>("RepoId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
@@ -89,10 +92,7 @@ namespace ModsDude.Server.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("RepoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
+                    b.HasKey("RepoId", "Id");
 
                     b.HasIndex("RepoId", "Name")
                         .IsUnique();
@@ -173,7 +173,7 @@ namespace ModsDude.Server.Persistence.Migrations
                     b.HasOne("ModsDude.Server.Domain.Repos.Repo", null)
                         .WithMany()
                         .HasForeignKey("RepoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -249,12 +249,14 @@ namespace ModsDude.Server.Persistence.Migrations
 
                             b1.HasKey("ProfileId", "RepoId", "ModId", "ModVersionId");
 
+                            b1.HasIndex("RepoId", "ProfileId");
+
                             b1.HasIndex("RepoId", "ModId", "ModVersionId");
 
                             b1.ToTable("ModDependency");
 
                             b1.WithOwner()
-                                .HasForeignKey("ProfileId");
+                                .HasForeignKey("RepoId", "ProfileId");
 
                             b1.HasOne("ModsDude.Server.Domain.Mods.ModVersion", "ModVersion")
                                 .WithMany()

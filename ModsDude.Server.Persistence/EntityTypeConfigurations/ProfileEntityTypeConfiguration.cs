@@ -8,13 +8,15 @@ internal class ProfileEntityTypeConfiguration : IEntityTypeConfiguration<Profile
 {
     public void Configure(EntityTypeBuilder<Profile> builder)
     {
-        builder.HasKey(x => x.Id);
+        builder.HasKey(x => new { x.RepoId, x.Id });
 
         builder.HasOne<Repo>().WithMany().HasForeignKey(x => x.RepoId);
 
         builder.OwnsMany(x => x.ModDependencies, modDependency =>
         {
-            modDependency.WithOwner().HasForeignKey(ModDependencyShadowProperties.ProfileId);
+            modDependency.WithOwner().HasForeignKey(
+                ModDependencyShadowProperties.RepoId,
+                ModDependencyShadowProperties.ProfileId);
 
             modDependency.HasOne(x => x.ModVersion).WithMany().HasForeignKey(
                 ModDependencyShadowProperties.RepoId,

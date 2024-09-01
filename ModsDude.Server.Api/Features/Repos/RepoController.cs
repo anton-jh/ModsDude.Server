@@ -13,6 +13,7 @@ using System.Diagnostics;
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
 [ApiController]
+[Route("api")]
 public class RepoController(
     IRepoService repoService,
     IUnitOfWork unitOfWork,
@@ -20,7 +21,7 @@ public class RepoController(
     ApplicationDbContext dbContext)
     : ControllerBase
 {
-    [HttpPost("/repos")]
+    [HttpPost("repos")]
     [Authorize(Scopes.Repo.Create)]
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
@@ -52,7 +53,7 @@ public class RepoController(
         throw new UnreachableException();
     }
 
-    [HttpGet("/repos")]
+    [HttpGet("repos")]
     public async Task<IEnumerable<RepoMembershipDto>> GetMyRepos(CancellationToken cancellationToken)
     {
         var userId = HttpContext.User.GetUserId();
@@ -74,7 +75,7 @@ public class RepoController(
         return dtos;
     }
 
-    [HttpPut("/repos/{id:guid}")]
+    [HttpPut("repos/{id:guid}")]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
@@ -103,7 +104,7 @@ public class RepoController(
         throw new UnreachableException();
     }
 
-    [HttpDelete("/repos/{id:guid}")]
+    [HttpDelete("repos/{id:guid}")]
     public async Task<ActionResult> DeleteRepo(Guid id, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);

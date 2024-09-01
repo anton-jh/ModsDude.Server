@@ -3,24 +3,26 @@ using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Auth0.AuthenticationApi;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Middleware.UserLoading;
+using ModsDude.Server.Api.ModelBinding;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Profiles;
 using ModsDude.Server.Application.Features.Repos;
+using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
-using ModsDude.Server.Domain.Profiles;
-using ModsDude.Server.Domain.RepoMemberships;
-using ModsDude.Server.Domain.Repos;
-using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 using ModsDude.Server.Persistence.Repositories;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddControllers(options =>
+{
+    //options.ModelBinderProviders.Insert(0, new StronglyTypedIdModelBinderProvider());
+    //options.Conventions.Add(new StronglyTypedIdConvention());
+}).AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
@@ -66,7 +68,8 @@ builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()
     .AddScoped<IUserRepository, UserRepository>()
     .AddScoped<IRepoRepository, RepoRepository>()
-    .AddScoped<IProfileRepository, ProfileRepository>();
+    .AddScoped<IProfileRepository, ProfileRepository>()
+    .AddScoped<IModRepository, ModRepository>();
 
 builder.Services
     .AddDbContext<ApplicationDbContext>(options =>
