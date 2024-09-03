@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Application.Authorization;
@@ -12,8 +13,9 @@ using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Features.Profiles;
 
-[ApiController] // TODO: versioning
-[Route("api")]
+[ApiController]
+[ApiVersion(1)]
+[Route("api/v{v:apiVersion}")]
 public class ProfileController(
     IRepoAuthorizationService repoAuthorizationService,
     IProfileService profileService,
@@ -138,6 +140,8 @@ public class ProfileController(
         }
         throw new UnreachableException();
     }
+
+    // todo get all mod dependencies
 
     [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")] // TODO add Authorize attributes where needed (probably everywhere)
     public async Task<ActionResult> UpdateModDependency( // TODO: swagger shows return value as octet-stream...???

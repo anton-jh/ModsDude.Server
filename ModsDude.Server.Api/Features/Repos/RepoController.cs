@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
@@ -13,7 +14,8 @@ using System.Diagnostics;
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
 [ApiController]
-[Route("api")]
+[ApiVersion(1)]
+[Route("api/v{v:apiVersion}")]
 public class RepoController(
     IRepoService repoService,
     IUnitOfWork unitOfWork,

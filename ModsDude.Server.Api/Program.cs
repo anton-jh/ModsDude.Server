@@ -1,9 +1,9 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Auth0.AuthenticationApi;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Middleware.UserLoading;
-using ModsDude.Server.Api.ModelBinding;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
@@ -35,6 +35,23 @@ builder.Services
 
 builder.Services
     .AddOpenApiDocument();
+
+builder.Services
+    .AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1);
+        options.ReportApiVersions = true;
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ApiVersionReader = ApiVersionReader.Combine(
+            new UrlSegmentApiVersionReader(),
+            new HeaderApiVersionReader("X-Api-Version"));
+    })
+    .AddMvc()
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'V";
+        options.SubstituteApiVersionInUrl = true;
+    });
 
 builder.Services
     .AddAuthentication(options =>
