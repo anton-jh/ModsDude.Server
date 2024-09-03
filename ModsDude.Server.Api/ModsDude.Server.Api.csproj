@@ -29,4 +29,8 @@
     <ProjectReference Include="..\ModsDude.Server.Persistence\ModsDude.Server.Persistence.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Profiles\" />
+  </ItemGroup>
+
 </Project>

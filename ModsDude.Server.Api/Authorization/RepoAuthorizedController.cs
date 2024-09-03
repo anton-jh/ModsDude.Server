@@ -9,8 +9,8 @@ public class RepoAuthorizedController(
     IRepoAuthorizationService repoAuthorizationService)
     : ControllerBase
 {
-    protected Task<bool> AuthorizeForRepoAsync(Guid repoId, CancellationToken cancellationToken)
+    protected Task<bool> AuthorizeForRepoAsync(Guid repoId, RepoMembershipLevel membershipLevel, CancellationToken cancellationToken)
     {
-        return repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), new RepoId(repoId), RepoMembershipLevel.Member, cancellationToken);
+        return repoAuthorizationService.AuthorizeAsync(HttpContext.User.GetUserId(), new RepoId(repoId), membershipLevel, cancellationToken);
     }
 }

@@ -9,4 +9,3 @@ public interface IRepoRepository
     void AddNewRepo(Repo repo);
     void Delete(Repo repo);
 }
-// TODO: maybe move the repository interfaces to application? but then Persistence would need to reference Application, shouldn't be a problem

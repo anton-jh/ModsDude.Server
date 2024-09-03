@@ -7,11 +7,12 @@ using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Profiles;
 using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Profiles;
+using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
 using System.Diagnostics;
 
-namespace ModsDude.Server.Api.Features.Profiles;
+namespace ModsDude.Server.Api.Controllers;
 
 [ApiController]
 [ApiVersion(1)]
@@ -27,7 +28,7 @@ public class ProfileController(
     [HttpPost("repos/{repoId:guid}/profiles")]
     public async Task<ActionResult<ProfileDto>> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
@@ -38,7 +39,7 @@ public class ProfileController(
         {
             case CreateProfileResult.Ok ok:
                 await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(ProfileDto.FromProfile(ok.Profile));
+                return Ok(ProfileDto.FromModel(ok.Profile));
 
             case CreateProfileResult.NameTaken:
                 return Conflict();
@@ -49,7 +50,7 @@ public class ProfileController(
     [HttpGet("repos/{repoId:guid}/profiles")]
     public async Task<ActionResult<IEnumerable<ProfileDto>>> GetAll(Guid repoId, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Guest, cancellationToken))
         {
             return Forbid();
         }
@@ -58,7 +59,7 @@ public class ProfileController(
             .Where(x => x.RepoId == new RepoId(repoId))
             .ToListAsync(cancellationToken);
 
-        var dtos = profiles.Select(ProfileDto.FromProfile);
+        var dtos = profiles.Select(ProfileDto.FromModel);
 
         return Ok(dtos);
     }
@@ -66,7 +67,7 @@ public class ProfileController(
     [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}")]
     public async Task<ActionResult<ProfileDto>> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
@@ -83,7 +84,7 @@ public class ProfileController(
 
             case UpdateProfileResult.Ok ok:
                 await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(ProfileDto.FromProfile(ok.Profile));
+                return Ok(ProfileDto.FromModel(ok.Profile));
         }
         throw new UnreachableException();
     }
@@ -91,7 +92,7 @@ public class ProfileController(
     [HttpDelete("repos/{repoId:guid}/profiles/{profileId:guid}")]
     public async Task<ActionResult> Delete(Guid repoId, Guid profileId, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
@@ -113,7 +114,7 @@ public class ProfileController(
     [HttpPost("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies")]
     public async Task<ActionResult> AddModDependency(Guid repoId, Guid profileId, AddModDependencyRequest request, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
@@ -125,7 +126,7 @@ public class ProfileController(
             new ModVersionId(request.VersionId),
             request.LockVersion,
             cancellationToken);
-        
+
         switch (result)
         {
             case AddModDependencyResult.ProfileNotFound:
@@ -141,9 +142,28 @@ public class ProfileController(
         throw new UnreachableException();
     }
 
-    // todo get all mod dependencies
+    [HttpGet("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies")]
+    public async Task<ActionResult<IEnumerable<ModDependencyDto>>> GetModDependencies(
+        Guid repoId,
+        Guid profileId,
+        CancellationToken cancellationToken)
+    {
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
+        {
+            return Forbid();
+        }
 
-    [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")] // TODO add Authorize attributes where needed (probably everywhere)
+        var modDependencies = await dbContext.Profiles
+            .Where(x => x.Id == new ProfileId(profileId))
+            .SelectMany(x => x.ModDependencies)
+            .ToListAsync(cancellationToken);
+
+        var dtos = modDependencies.Select(ModDependencyDto.FromModel);
+
+        return Ok(dtos);
+    }
+
+    [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
     public async Task<ActionResult> UpdateModDependency( // TODO: swagger shows return value as octet-stream...???
         Guid repoId,
         Guid profileId,
@@ -151,7 +171,7 @@ public class ProfileController(
         UpdateModDependencyRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
@@ -189,7 +209,7 @@ public class ProfileController(
         string modId,
         CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, cancellationToken))
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
         {
             return Forbid();
         }
@@ -216,6 +236,18 @@ public class ProfileController(
     }
 }
 
+public record CreateProfileRequest(string Name);
 public record UpdateProfileRequest(string Name);
 public record AddModDependencyRequest(string ModId, string VersionId, bool LockVersion);
 public record UpdateModDependencyRequest(string VersionId, bool LockVersion);
+
+public record ModDependencyDto(string ModId, string ModVersionId, bool LockVersion)
+{
+    public static ModDependencyDto FromModel(ModDependency model)
+        => new(model.ModVersion.Mod.Id.Value, model.ModVersion.Id.Value, model.LockVersion);
+}
+public record ProfileDto(Guid Id, Guid RepoId, string Name)
+{
+    public static ProfileDto FromModel(Profile profile)
+        => new(profile.Id.Value, profile.RepoId.Value, profile.Name.Value);
+}
