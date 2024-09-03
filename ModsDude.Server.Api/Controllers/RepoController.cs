@@ -11,7 +11,7 @@ using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
 using System.Diagnostics;
 
-namespace ModsDude.Server.Api.Endpoints.Repos;
+namespace ModsDude.Server.Api.Controllers;
 
 [ApiController]
 [ApiVersion(1)]
@@ -68,11 +68,9 @@ public class RepoController(
             })
             .OrderBy(x => x.Repo.Name);
         var repos = await reposQuery.ToListAsync(cancellationToken);
-        var dtos = repos.Select(x => new RepoMembershipDto()
-        {
-            Repo = RepoDto.FromRepo(x.Repo),
-            MembershipLevel = RepoMembershipLevelEnumExtensions.Map(x.Membership.Level)
-        });
+        var dtos = repos.Select(x => new RepoMembershipDto(
+            RepoDto.FromRepo(x.Repo),
+            RepoMembershipLevelEnumExtensions.Map(x.Membership.Level)));
 
         return dtos;
     }
@@ -127,6 +125,49 @@ public class RepoController(
             case DeleteRepoResult.NotFound:
                 return NotFound();
         }
+        throw new UnreachableException();
+    }
+}
+
+
+public record CreateRepoRequest(string Name, string? ModAdapterScript, string? SavegameAdapterScript);
+public record UpdateRepoRequest(string Name);
+
+public record RepoDto(Guid Id, string Name, string? ModAdapter, string? SavegameAdapter)
+{
+    public static RepoDto FromRepo(Repo repo)
+    {
+        return new(
+            repo.Id.Value,
+            repo.Name.Value,
+            repo.ModAdapter?.Value,
+            repo.SavegameAdapter?.Value);
+    }
+}
+public record RepoMembershipDto(RepoDto Repo, RepoMembershipLevelEnum MembershipLevel);
+public enum RepoMembershipLevelEnum
+{
+    Guest,
+    Member,
+    Admin
+}
+public static class RepoMembershipLevelEnumExtensions
+{
+    public static RepoMembershipLevelEnum Map(RepoMembershipLevel source)
+    {
+        if (source == RepoMembershipLevel.Admin)
+        {
+            return RepoMembershipLevelEnum.Admin;
+        }
+        if (source == RepoMembershipLevel.Member)
+        {
+            return RepoMembershipLevelEnum.Member;
+        }
+        if (source == RepoMembershipLevel.Guest)
+        {
+            return RepoMembershipLevelEnum.Guest;
+        }
+
         throw new UnreachableException();
     }
 }
