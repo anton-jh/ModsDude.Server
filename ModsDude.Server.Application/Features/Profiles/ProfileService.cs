@@ -82,8 +82,9 @@ public class ProfileService(
             return new AddModDependencyResult.AlreadyExists();
         }
 
-        profile.AddDependency(modVersion, lockVersion);
-        return new AddModDependencyResult.Ok();
+        var newDependency = profile.AddDependency(modVersion, lockVersion);
+
+        return new AddModDependencyResult.Ok(newDependency);
     }
 
     public async Task<UpdateModDependencyResult> UpdateModDependency(
@@ -117,7 +118,8 @@ public class ProfileService(
         }
 
         dependency.LockVersion = lockVersion;
-        return new UpdateModDependencyResult.Ok();
+        
+        return new UpdateModDependencyResult.Ok(dependency);
     }
 
     public async Task<DeleteModDependencyResult> DeleteModDependency(RepoId repoId, ProfileId profileId, ModId modId, CancellationToken cancellationToken)
@@ -135,6 +137,7 @@ public class ProfileService(
         }
 
         profile.DeleteDependency(dependency);
+
         return new DeleteModDependencyResult.Ok();
     }
 }

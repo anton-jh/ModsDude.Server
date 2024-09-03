@@ -35,7 +35,7 @@ public abstract record DeleteProfileResult
 
 public abstract record AddModDependencyResult
 {
-    public record Ok : AddModDependencyResult;
+    public record Ok(ModDependency ModDependency) : AddModDependencyResult;
     public record ProfileNotFound : AddModDependencyResult;
     public record ModNotFound : AddModDependencyResult;
     public record AlreadyExists : AddModDependencyResult;
@@ -43,7 +43,7 @@ public abstract record AddModDependencyResult
 
 public abstract record UpdateModDependencyResult
 {
-    public record Ok : UpdateModDependencyResult;
+    public record Ok(ModDependency ModDependency) : UpdateModDependencyResult;
     public record ProfileNotFound : UpdateModDependencyResult;
     public record DependencyNotFound : UpdateModDependencyResult;
     public record ModVersionNotFound : UpdateModDependencyResult;
@@ -54,4 +54,4 @@ public abstract record DeleteModDependencyResult
     public record Ok : DeleteModDependencyResult;
     public record ProfileNotFound : DeleteModDependencyResult;
     public record DependencyNotFound : DeleteModDependencyResult;
-}
+}   

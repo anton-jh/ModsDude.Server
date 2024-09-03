@@ -105,6 +105,7 @@ public class RepoController(
     }
 
     [HttpDelete("repos/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult> DeleteRepo(Guid id, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
