@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
+using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Profiles;
@@ -18,41 +19,20 @@ namespace ModsDude.Server.Api.Controllers;
 [ApiVersion(1)]
 [Route("api/v{v:apiVersion}")]
 public class ProfileController(
-    IRepoAuthorizationService repoAuthorizationService,
     IProfileService profileService,
     IUnitOfWork unitOfWork,
     ApplicationDbContext dbContext)
-    : RepoAuthorizedController(
-        repoAuthorizationService)
+    : ControllerBase
 {
-    [HttpPost("repos/{repoId:guid}/profiles")]
-    public async Task<ActionResult<ProfileDto>> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
-    {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
-        var result = await profileService.Create(new RepoId(repoId), new ProfileName(request.Name), cancellationToken);
-
-        switch (result)
-        {
-            case CreateProfileResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(ProfileDto.FromModel(ok.Profile));
-
-            case CreateProfileResult.NameTaken:
-                return Conflict();
-        }
-        throw new UnreachableException();
-    }
-
+    [AuthorizeRepo(RepoMembershipLevel.Guest)]
     [HttpGet("repos/{repoId:guid}/profiles")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ProfileDto>))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<IEnumerable<ProfileDto>>> GetAll(Guid repoId, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Guest, cancellationToken))
+        if (await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Guest, cancellationToken) is ActionResult res)
         {
-            return Forbid();
+            return res;
         }
 
         var profiles = await dbContext.Profiles
@@ -64,7 +44,37 @@ public class ProfileController(
         return Ok(dtos);
     }
 
+    [HttpPost("repos/{repoId:guid}/profiles")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileDto))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(CustomProblemDetails))]
+    public async Task<ActionResult<ProfileDto>> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
+    {
+        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
+        {
+            return StatusCode(
+                StatusCodes.Status403Forbidden,
+                Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
+        }
+
+        var result = await profileService.Create(new RepoId(repoId), new ProfileName(request.Name), cancellationToken);
+
+        switch (result)
+        {
+            case CreateProfileResult.Ok ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok(ProfileDto.FromModel(ok.Profile));
+
+            case CreateProfileResult.NameTaken:
+                return Conflict(Problems.NameTaken(request.Name));
+        }
+        throw new UnreachableException();
+    }
+
     [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileDto))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<ProfileDto>> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
     {
         if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
@@ -77,10 +87,10 @@ public class ProfileController(
         switch (result)
         {
             case UpdateProfileResult.NotFound:
-                return NotFound();
+                return NotFound(Problems.NotFound);
 
             case UpdateProfileResult.NameTaken:
-                return Conflict();
+                return Conflict(Problems.NameTaken(request.Name));
 
             case UpdateProfileResult.Ok ok:
                 await unitOfWork.CommitAsync(cancellationToken);
@@ -91,6 +101,7 @@ public class ProfileController(
 
     [HttpDelete("repos/{repoId:guid}/profiles/{profileId:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [produces]
     public async Task<ActionResult> Delete(Guid repoId, Guid profileId, CancellationToken cancellationToken)
     {
         if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))

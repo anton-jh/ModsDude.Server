@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
+using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Repos;
@@ -23,8 +24,30 @@ public class RepoController(
     ApplicationDbContext dbContext)
     : ControllerBase
 {
+    [HttpGet("repos")]
+    public async Task<IEnumerable<RepoMembershipDto>> GetMyRepos(CancellationToken cancellationToken)
+    {
+        var userId = HttpContext.User.GetUserId();
+        var reposQuery = dbContext.RepoMemberships
+            .Where(x => x.UserId == userId)
+            .Join(dbContext.Repos, mem => mem.RepoId, repo => repo.Id, (mem, repo) => new
+            {
+                Repo = repo,
+                Membership = mem
+            })
+            .OrderBy(x => x.Repo.Name);
+        var repos = await reposQuery.ToListAsync(cancellationToken);
+        var dtos = repos.Select(x => new RepoMembershipDto(
+            RepoDto.FromModel(x.Repo),
+            RepoMembershipLevelEnumExtensions.Map(x.Membership.Level)));
+
+        return dtos;
+    }
+
     [HttpPost("repos")]
     [Authorize(Scopes.Repo.Create)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RepoDto))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<RepoDto>> CreateRepo(CreateRepoRequest request, CancellationToken cancellationToken)
     {
         if (request.ModAdapterScript is null && request.SavegameAdapterScript is null)
@@ -47,35 +70,17 @@ public class RepoController(
         {
             case CreateRepoResult.Ok ok:
                 await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(RepoDto.FromRepo(ok.Repo));
+                return Ok(RepoDto.FromModel(ok.Repo));
 
             case CreateRepoResult.NameTaken:
-                return Conflict();
+                return Conflict(Problems.NameTaken(request.Name));
         }
         throw new UnreachableException();
     }
 
-    [HttpGet("repos")]
-    public async Task<IEnumerable<RepoMembershipDto>> GetMyRepos(CancellationToken cancellationToken)
-    {
-        var userId = HttpContext.User.GetUserId();
-        var reposQuery = dbContext.RepoMemberships
-        .Where(x => x.UserId == userId)
-            .Join(dbContext.Repos, mem => mem.RepoId, repo => repo.Id, (mem, repo) => new
-            {
-                Repo = repo,
-                Membership = mem
-            })
-            .OrderBy(x => x.Repo.Name);
-        var repos = await reposQuery.ToListAsync(cancellationToken);
-        var dtos = repos.Select(x => new RepoMembershipDto(
-            RepoDto.FromRepo(x.Repo),
-            RepoMembershipLevelEnumExtensions.Map(x.Membership.Level)));
-
-        return dtos;
-    }
-
     [HttpPut("repos/{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
@@ -93,19 +98,20 @@ public class RepoController(
         {
             case UpdateRepoResult.Ok ok:
                 await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(RepoDto.FromRepo(ok.Repo));
+                return Ok(RepoDto.FromModel(ok.Repo));
 
             case UpdateRepoResult.NotFound:
-                return NotFound();
+                return NotFound(Problems.NotFound);
 
             case UpdateRepoResult.NameTaken:
-                return Conflict();
+                return Conflict(Problems.NameTaken(request.Name));
         }
         throw new UnreachableException();
     }
 
     [HttpDelete("repos/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult> DeleteRepo(Guid id, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
@@ -124,7 +130,7 @@ public class RepoController(
                 return Ok();
 
             case DeleteRepoResult.NotFound:
-                return NotFound();
+                return NotFound(Problems.NotFound);
         }
         throw new UnreachableException();
     }
@@ -136,7 +142,7 @@ public record UpdateRepoRequest(string Name);
 
 public record RepoDto(Guid Id, string Name, string? ModAdapter, string? SavegameAdapter)
 {
-    public static RepoDto FromRepo(Repo repo)
+    public static RepoDto FromModel(Repo repo)
     {
         return new(
             repo.Id.Value,
