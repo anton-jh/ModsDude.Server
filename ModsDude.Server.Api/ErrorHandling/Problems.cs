@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ModsDude.Server.Api.Controllers;
-using ModsDude.Server.Domain.RepoMemberships;
+﻿using ModsDude.Server.Domain.RepoMemberships;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -41,6 +39,21 @@ public static class Problems
         };
     }
 
+    public static CustomProblemDetails NotAuthorized(string[]? scopes = null)
+    {
+        var problemDetails = new CustomProblemDetails()
+        {
+            Type = ProblemType.NotAuthorized,
+            Title = "Not authorized",
+            Detail = $"You are not authorized to perform this operation."
+        };
+        if (scopes is not null)
+        {
+            problemDetails.Extensions["scopes"] = string.Join(", ", scopes);
+        }
+        return problemDetails;
+    }
+
 
     public enum ProblemType
     {
@@ -51,6 +64,9 @@ public static class Problems
         NotFound,
 
         [EnumMember(Value = _typeBaseUri + "insufficient-repo-access")]
-        InsufficientRepoAccess
+        InsufficientRepoAccess,
+
+        [EnumMember(Value = _typeBaseUri + "not-authorized")]
+        NotAuthorized,
     }
 }

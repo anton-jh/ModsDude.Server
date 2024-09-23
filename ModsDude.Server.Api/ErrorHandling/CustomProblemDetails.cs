@@ -8,6 +8,13 @@ public class CustomProblemDetails : ProblemDetails
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public required new ProblemType Type { get; init; }
+
+
+    public CustomProblemDetails With(Action<CustomProblemDetails> modifyAction)
+    {
+        modifyAction(this);
+        return this;
+    }
 }
 
 

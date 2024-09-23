@@ -1,9 +1,9 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.ErrorHandling;
-using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Profiles;
 using ModsDude.Server.Domain.Mods;
@@ -24,17 +24,12 @@ public class ProfileController(
     ApplicationDbContext dbContext)
     : ControllerBase
 {
-    [AuthorizeRepo(RepoMembershipLevel.Guest)]
     [HttpGet("repos/{repoId:guid}/profiles")]
+    [AuthorizeRepo(RepoMembershipLevel.Guest)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ProfileDto>))]
     [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<IEnumerable<ProfileDto>>> GetAll(Guid repoId, CancellationToken cancellationToken)
     {
-        if (await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Guest, cancellationToken) is ActionResult res)
-        {
-            return res;
-        }
-
         var profiles = await dbContext.Profiles
             .Where(x => x.RepoId == new RepoId(repoId))
             .ToListAsync(cancellationToken);
@@ -45,18 +40,12 @@ public class ProfileController(
     }
 
     [HttpPost("repos/{repoId:guid}/profiles")]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileDto))]
-    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<ProfileDto>> CreateProfile(Guid repoId, CreateProfileRequest request, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return StatusCode(
-                StatusCodes.Status403Forbidden,
-                Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
-        }
-
         var result = await profileService.Create(new RepoId(repoId), new ProfileName(request.Name), cancellationToken);
 
         switch (result)
@@ -72,99 +61,60 @@ public class ProfileController(
     }
 
     [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}")]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ProfileDto))]
     [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
     [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<ProfileDto>> Update(Guid repoId, Guid profileId, UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
         var result = await profileService.Update(new RepoId(repoId), new ProfileId(profileId), new ProfileName(request.Name), cancellationToken);
 
         switch (result)
         {
+            case UpdateProfileResult.Ok ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok(ProfileDto.FromModel(ok.Profile));
+
             case UpdateProfileResult.NotFound:
                 return NotFound(Problems.NotFound);
 
             case UpdateProfileResult.NameTaken:
                 return Conflict(Problems.NameTaken(request.Name));
-
-            case UpdateProfileResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(ProfileDto.FromModel(ok.Profile));
         }
         throw new UnreachableException();
     }
 
     [HttpDelete("repos/{repoId:guid}/profiles/{profileId:guid}")]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [produces]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult> Delete(Guid repoId, Guid profileId, CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
         var result = await profileService.Delete(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
 
         switch (result)
         {
-            case DeleteProfileResult.NotFound:
-                return NotFound();
-
             case DeleteProfileResult.Ok:
                 await unitOfWork.CommitAsync(cancellationToken);
                 return Ok();
-        }
-        throw new UnreachableException();
-    }
 
-    [HttpPost("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies")]
-    public async Task<ActionResult<ModDependencyDto>> AddModDependency(Guid repoId, Guid profileId, AddModDependencyRequest request, CancellationToken cancellationToken)
-    {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
-        var result = await profileService.AddModDependency(
-            new RepoId(repoId),
-            new ProfileId(profileId),
-            new ModId(request.ModId),
-            new ModVersionId(request.VersionId),
-            request.LockVersion,
-            cancellationToken);
-
-        switch (result)
-        {
-            case AddModDependencyResult.ProfileNotFound:
-                return NotFound($"No profile '{profileId}' found in repo '{repoId}'");
-
-            case AddModDependencyResult.ModNotFound:
-                return UnprocessableEntity($"No mod '{request.ModId}' found in repo '{repoId}'");
-
-            case AddModDependencyResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return Ok(ModDependencyDto.FromModel(ok.ModDependency));
+            case DeleteProfileResult.NotFound:
+                return NotFound(Problems.NotFound);
         }
         throw new UnreachableException();
     }
 
     [HttpGet("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies")]
+    [AuthorizeRepo(RepoMembershipLevel.Guest)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ModDependencyDto>))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<IEnumerable<ModDependencyDto>>> GetModDependencies(
         Guid repoId,
         Guid profileId,
         CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Guest, cancellationToken))
-        {
-            return Forbid();
-        }
-
         var modDependencies = await dbContext.Profiles
             .Where(x => x.RepoId == new RepoId(repoId) && x.Id == new ProfileId(profileId))
             .SelectMany(x => x.ModDependencies)
@@ -176,17 +126,16 @@ public class ProfileController(
     }
 
     [HttpGet("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ModDependencyDto))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<ModDependencyDto>> GetModDependency(
         Guid repoId,
         Guid profileId,
         string modId,
         CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
         var modDependency = await dbContext.Profiles
             .Where(x => x.RepoId == new RepoId(repoId) && x.Id == new ProfileId(profileId))
             .SelectMany(x => x.ModDependencies)
@@ -194,7 +143,7 @@ public class ProfileController(
 
         if (modDependency is null)
         {
-            return NotFound("TODO");
+            return NotFound(Problems.NotFound);
         }
 
         var dto = ModDependencyDto.FromModel(modDependency);
@@ -202,8 +151,42 @@ public class ProfileController(
         return Ok(dto);
     }
 
+    [HttpPost("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies")]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ModDependencyDto))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
+    public async Task<ActionResult<ModDependencyDto>> AddModDependency(Guid repoId, Guid profileId, AddModDependencyRequest request, CancellationToken cancellationToken)
+    {
+        var result = await profileService.AddModDependency(
+            new RepoId(repoId),
+            new ProfileId(profileId),
+            new ModId(request.ModId),
+            new ModVersionId(request.VersionId),
+            request.LockVersion,
+            cancellationToken);
+
+        switch (result)
+        {
+            case AddModDependencyResult.Ok ok:
+                await unitOfWork.CommitAsync(cancellationToken);
+                return Ok(ModDependencyDto.FromModel(ok.ModDependency));
+
+            case AddModDependencyResult.ProfileNotFound:
+                return NotFound(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
+
+            case AddModDependencyResult.ModNotFound:
+                return UnprocessableEntity(Problems.NotFound.With(x => x.Detail = $"No mod '{request.ModId}' found in repo '{repoId}'"));
+        }
+        throw new UnreachableException();
+    }
+
     [HttpPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ModDependencyDto))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<ModDependencyDto>> UpdateModDependency(
         Guid repoId,
         Guid profileId,
@@ -211,11 +194,6 @@ public class ProfileController(
         UpdateModDependencyRequest request,
         CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
         var result = await profileService.UpdateModDependency(
             new RepoId(repoId),
             new ProfileId(profileId),
@@ -226,35 +204,33 @@ public class ProfileController(
 
         switch (result)
         {
-            case UpdateModDependencyResult.DependencyNotFound:
-                return NotFound($"No dependency on mod '{modId}' found in profile '{profileId}'");
-
-            case UpdateModDependencyResult.ModVersionNotFound:
-                return NotFound($"No version '{request.VersionId}' of mod '{modId}' found in repo '{repoId}'");
-
-            case UpdateModDependencyResult.ProfileNotFound:
-                return NotFound($"No profile '{profileId}' found in repo '{repoId}'");
-
             case UpdateModDependencyResult.Ok ok:
                 await unitOfWork.CommitAsync(cancellationToken);
                 return Ok(ModDependencyDto.FromModel(ok.ModDependency));
+
+            case UpdateModDependencyResult.DependencyNotFound:
+                return NotFound(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
+
+            case UpdateModDependencyResult.ModVersionNotFound:
+                return NotFound(Problems.NotFound.With(x => x.Detail = $"No version '{request.VersionId}' of mod '{modId}' found in repo '{repoId}'"));
+
+            case UpdateModDependencyResult.ProfileNotFound:
+                return NotFound(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
         }
         throw new UnreachableException();
     }
 
     [HttpDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:guid}")]
+    [AuthorizeRepo(RepoMembershipLevel.Member)]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status403Forbidden, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult> DeleteModDependency(
         Guid repoId,
         Guid profileId,
         string modId,
         CancellationToken cancellationToken)
     {
-        if (!await AuthorizeForRepoAsync(repoId, RepoMembershipLevel.Member, cancellationToken))
-        {
-            return Forbid();
-        }
-
         var result = await profileService.DeleteModDependency(
             new RepoId(repoId),
             new ProfileId(profileId),
@@ -264,10 +240,10 @@ public class ProfileController(
         switch (result)
         {
             case DeleteModDependencyResult.ProfileNotFound:
-                return NotFound($"No profile '{profileId}' found in repo '{repoId}'");
+                return NotFound(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
 
             case DeleteModDependencyResult.DependencyNotFound:
-                return NotFound($"No dependency on mod '{modId}' found in profile '{profileId}'");
+                return NotFound(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
 
             case DeleteModDependencyResult.Ok:
                 await unitOfWork.CommitAsync(cancellationToken);

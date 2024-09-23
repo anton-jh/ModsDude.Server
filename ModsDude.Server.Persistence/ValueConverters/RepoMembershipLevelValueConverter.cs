@@ -6,8 +6,8 @@ internal class RepoMembershipLevelValueConverter : ValueConverter<RepoMembership
 {
     public RepoMembershipLevelValueConverter()
         : base(
-            model => model.Value,
-            provider => RepoMembershipLevel.Parse(provider))
+            model => model.ToString(),
+            provider => (RepoMembershipLevel)Enum.Parse(typeof(RepoMembershipLevel), provider))
     {
     }
 }

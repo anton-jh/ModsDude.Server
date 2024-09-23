@@ -25,6 +25,7 @@ public class RepoController(
     : ControllerBase
 {
     [HttpGet("repos")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<RepoMembershipDto>))]
     public async Task<IEnumerable<RepoMembershipDto>> GetMyRepos(CancellationToken cancellationToken)
     {
         var userId = HttpContext.User.GetUserId();
@@ -80,7 +81,8 @@ public class RepoController(
 
     [HttpPut("repos/{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(CustomProblemDetails))]
+    [ProducesResponseType(StatusCodes.Status409Conflict, Type = typeof(CustomProblemDetails))]
     public async Task<ActionResult<RepoDto>> UpdateRepo(Guid id, UpdateRepoRequest request, CancellationToken cancellationToken)
     {
         var repoId = new RepoId(id);
