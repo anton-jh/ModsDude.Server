@@ -246,7 +246,7 @@ public class ProfileController(
                 return NotFound(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
 
             case DeleteModDependencyResult.Ok:
-                await unitOfWork.CommitAsync(cancellationToken);
+                await unitOfWork.CommitAsync(cancellationToken); // TODO: maybe move this to a middleware/filter so I can use a switch-expression instead?
                 return Ok();
         }
         throw new UnreachableException();
