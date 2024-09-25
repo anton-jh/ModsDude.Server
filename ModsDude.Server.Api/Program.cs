@@ -1,8 +1,11 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Auth0.AuthenticationApi;
 using ModsDude.Server.Api.Authorization;
+using ModsDude.Server.Api.Endpoints;
 using ModsDude.Server.Api.Middleware.UserLoading;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
@@ -34,6 +37,7 @@ builder.Services
     });
 
 builder.Services
+    .AddEndpointsApiExplorer()
     .AddOpenApiDocument();
 
 builder.Services
@@ -42,9 +46,7 @@ builder.Services
         options.DefaultApiVersion = new ApiVersion(1);
         options.ReportApiVersions = true;
         options.AssumeDefaultVersionWhenUnspecified = true;
-        options.ApiVersionReader = ApiVersionReader.Combine(
-            new UrlSegmentApiVersionReader(),
-            new HeaderApiVersionReader("X-Api-Version"));
+        options.ApiVersionReader = new UrlSegmentApiVersionReader();
     })
     .AddMvc()
     .AddApiExplorer(options =>
@@ -97,6 +99,10 @@ builder.Services
 
 var app = builder.Build();
 
+var apiVersionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1))
+    .Build();
+
 
 if (app.Environment.IsDevelopment())
 {
@@ -109,8 +115,10 @@ app.UseAuthorization();
 
 app.UseMiddleware<UserLoadingMiddleware>();
 
-app.MapControllers()
-    .RequireAuthorization();
+app.MapGroup("api/v{v:apiVersion}")
+    .WithApiVersionSet(apiVersionSet)
+    .RequireAuthorization()
+    .MapAllEndpointsFromAssembly(typeof(Program).Assembly);
 
 
 using (var scope = app.Services.CreateScope())
