@@ -36,12 +36,12 @@ public class AddModDependencyEndpoint : IEndpoint
         }
 
         var result = await profileService.AddModDependency(
-        new RepoId(repoId),
-        new ProfileId(profileId),
-        new ModId(request.ModId),
-        new ModVersionId(request.VersionId),
-        request.LockVersion,
-        cancellationToken);
+            new RepoId(repoId),
+            new ProfileId(profileId),
+            new ModId(request.ModId),
+            new ModVersionId(request.VersionId),
+            request.LockVersion,
+            cancellationToken);
 
         switch (result)
         {

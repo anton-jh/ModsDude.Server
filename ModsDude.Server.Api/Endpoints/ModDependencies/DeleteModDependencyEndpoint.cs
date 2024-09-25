@@ -1,5 +1,4 @@
-﻿
-using Microsoft.AspNetCore.Http.HttpResults;
+﻿using Microsoft.AspNetCore.Http.HttpResults;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
@@ -18,7 +17,7 @@ public class DeleteModDependencyEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        throw new NotImplementedException();
+        builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:string}", Delete);
     }
 
 
