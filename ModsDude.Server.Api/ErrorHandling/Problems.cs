@@ -39,20 +39,13 @@ public static class Problems
         };
     }
 
-    public static CustomProblemDetails NotAuthorized(string[]? scopes = null)
-    {
-        var problemDetails = new CustomProblemDetails()
+    public static CustomProblemDetails NotAuthorized =>
+        new()
         {
             Type = ProblemType.NotAuthorized,
             Title = "Not authorized",
             Detail = $"You are not authorized to perform this operation."
         };
-        if (scopes is not null)
-        {
-            problemDetails.Extensions["scopes"] = string.Join(", ", scopes);
-        }
-        return problemDetails;
-    }
 
 
     public enum ProblemType

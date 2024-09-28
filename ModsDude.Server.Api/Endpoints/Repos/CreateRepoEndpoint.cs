@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.Identity.Web;
+using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Domain.Repos;
+using ModsDude.Server.Persistence.DbContexts;
 using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
@@ -15,8 +16,7 @@ public class CreateRepoEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder builder)
     {
         builder.MapPost("repos", CreateRepo)
-            .RequireAuthorization()
-            .RequireScope(Scopes.Repo.Create);
+            .RequireAuthorization();
     }
 
 
@@ -24,15 +24,24 @@ public class CreateRepoEndpoint : IEndpoint
         CreateRepoRequest request,
         IRepoService repoService,
         IUnitOfWork unitOfWork,
+        ApplicationDbContext dbContext,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
+        var userId = httpContext.User.GetUserId();
+        var isTrusted = (await dbContext.Users
+            .FirstAsync(x => x.Id == userId, cancellationToken))
+            .IsTrusted;
+        if (!isTrusted)
+        {
+            return TypedResults.BadRequest(Problems.NotAuthorized);
+        }
+
         if (request.ModAdapterScript is null && request.SavegameAdapterScript is null)
         {
             //return BadRequest("Cannot create repo with both mod- and savegame-adapters null"); TODO
         }
 
-        var userId = httpContext.User.GetUserId();
         var name = new RepoName(request.Name);
         AdapterScript? modAdapter = request.ModAdapterScript is null
             ? null
