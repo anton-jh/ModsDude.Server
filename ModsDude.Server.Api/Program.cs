@@ -18,19 +18,21 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers(options =>
-{
-    //options.ModelBinderProviders.Insert(0, new StronglyTypedIdModelBinderProvider());
-    //options.Conventions.Add(new StronglyTypedIdConvention());
-}).AddJsonOptions(options =>
-{
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
-
 builder.Services
     .AddMediatR(config =>
     {
         config.RegisterServicesFromAssemblyContaining<ApplicationAssemblyMarker>();
+    });
+
+builder.Services
+    .ConfigureHttpJsonOptions(options =>
+    {
+        options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
+builder.Services
+    .Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
 builder.Services
