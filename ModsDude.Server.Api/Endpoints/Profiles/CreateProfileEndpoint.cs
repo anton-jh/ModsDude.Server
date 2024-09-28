@@ -22,7 +22,7 @@ public class CreateProfileEndpoint : IEndpoint
         Guid repoId,
         CreateProfileRequest request,
         HttpContext httpContext,
-        RepoAuthorizationService repoAuthorizationService,
+        IRepoAuthorizationService repoAuthorizationService,
         IProfileService profileService,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)

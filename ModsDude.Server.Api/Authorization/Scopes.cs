@@ -4,6 +4,6 @@ public static class Scopes
 {
     public static class Repo
     {
-        public const string Create = "create:repo";
+        public const string Create = "repos:create";
     }
 }

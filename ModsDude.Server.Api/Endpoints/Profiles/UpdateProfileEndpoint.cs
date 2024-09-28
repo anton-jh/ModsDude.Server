@@ -17,7 +17,7 @@ public class UpdateProfileEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        throw new NotImplementedException();
+        builder.MapPut("repos/{repoId:guid}/profiles/{profileId:guid}", Update);
     }
 
 

@@ -17,7 +17,7 @@ public class DeleteModDependencyEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:string}", Delete);
+        builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId}", Delete);
     }
 
 

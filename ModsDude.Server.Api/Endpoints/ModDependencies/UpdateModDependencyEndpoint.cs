@@ -18,7 +18,7 @@ public class UpdateModDependencyEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId:string}", Update);
+        builder.MapPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId}", Update);
     }
 
 
