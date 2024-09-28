@@ -1,10 +1,7 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
-using ModsDude.Server.Api.Auth0.AuthenticationApi;
-using ModsDude.Server.Api.Authorization;
+using Microsoft.Identity.Web;
 using ModsDude.Server.Api.Endpoints;
 using ModsDude.Server.Api.Middleware.UserLoading;
 using ModsDude.Server.Application;
@@ -56,24 +53,25 @@ builder.Services
     });
 
 builder.Services
-    .AddAuthentication(options =>
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(
+    options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    }).AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration.GetValue<string>("Auth:Authority");
-        options.Audience = builder.Configuration.GetValue<string>("Auth:Audience");
+        builder.Configuration.Bind("AzureAdB2C", options);
+        options.TokenValidationParameters.NameClaimType = "name";
         options.MapInboundClaims = false;
+    },
+    options =>
+    {
+        builder.Configuration.Bind("AzureAdB2C", options);
     });
-builder.Services.AddAuthorization(options
-    => options.AddApplicationPolicies());
+//builder.Services.AddAuthorization(options
+//    => options.AddApplicationPolicies());
+builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<UserLoadingMiddleware>();
-
-builder.Services.AddHttpClient<Auth0AuthenticationApiClient>();
 
 builder.Services
     .AddSingleton<ITimeService, TimeService>()

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Identity.Web;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
@@ -14,7 +15,8 @@ public class CreateRepoEndpoint : IEndpoint
     public void Map(IEndpointRouteBuilder builder)
     {
         builder.MapPost("repos", CreateRepo)
-            .RequireAuthorization(Scopes.Repo.Create);
+            .RequireAuthorization()
+            .RequireScope(Scopes.Repo.Create);
     }
 
 

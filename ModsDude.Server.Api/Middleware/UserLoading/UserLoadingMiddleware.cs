@@ -1,14 +1,14 @@
-﻿using ModsDude.Server.Api.Auth0.AuthenticationApi;
+﻿using Microsoft.EntityFrameworkCore;
 using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Middleware.UserLoading;
 
 public class UserLoadingMiddleware(
     ApplicationDbContext dbContext,
-    Auth0AuthenticationApiClient authenticationApiClient,
     ITimeService timeService)
     : IMiddleware
 {
@@ -23,6 +23,7 @@ public class UserLoadingMiddleware(
             return;
         }
 
+        var username = GetUsername(context.User);
         var userId = new UserId(subClaim.Value);
         var existingUser = await dbContext.Users.FindAsync(userId);
 
@@ -38,14 +39,25 @@ public class UserLoadingMiddleware(
             return;
         }
 
-        var userInfo = await authenticationApiClient.GetUserInfo();
-
-        var username = new Username(userInfo.Name);
         var newUser = new User(userId, username, timeService.Now());
+
+        if (await dbContext.Users.AnyAsync(x => x.Username == username))
+        {
+            throw new Exception("Username of new user is not unique");
+        }
 
         dbContext.Users.Add(newUser);
         await dbContext.SaveChangesAsync();
 
         await next(context);
+    }
+
+
+    private static Username GetUsername(ClaimsPrincipal claimsPrincipal)
+    {
+        var username = claimsPrincipal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Name)?.Value
+            ?? throw new Exception("User has no 'name' claim");
+
+        return new(username);
     }
 }
