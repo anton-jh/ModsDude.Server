@@ -49,7 +49,7 @@ public class DeleteModDependencyEndpoint : IEndpoint
                 return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
 
             case DeleteModDependencyResult.Ok:
-                await unitOfWork.CommitAsync(cancellationToken); // TODO: maybe move this to a middleware/filter so I can use a switch-expression instead?
+                await unitOfWork.CommitAsync(cancellationToken);
                 return TypedResults.Ok();
         }
         throw new UnreachableException();

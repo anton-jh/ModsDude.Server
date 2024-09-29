@@ -16,7 +16,7 @@ public class Profile(
     public IReadOnlySet<ModDependency> ModDependencies => _modDependencies;
 
     public ProfileName Name { get; set; } = name;
-    public DateTime Created { get; } = created; // TODO: should probably use DateTimeOffset here right?
+    public DateTime Created { get; } = created;
 
 
     public ModDependency AddDependency(ModVersion modVersion, bool lockVersion)
