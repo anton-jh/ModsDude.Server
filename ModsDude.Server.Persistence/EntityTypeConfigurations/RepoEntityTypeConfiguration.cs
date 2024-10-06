@@ -10,8 +10,7 @@ internal class RepoEntityTypeConfiguration : IEntityTypeConfiguration<Repo>
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name);
-        builder.Property(x => x.ModAdapter);
-        builder.Property(x => x.SavegameAdapter);
+        builder.ComplexProperty(x => x.AdapterData);
         builder.Property(x => x.Created);
     }
 }

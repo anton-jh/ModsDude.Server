@@ -43,7 +43,12 @@ public class CreateRepoEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.NameTaken(request.Name));
         }
 
-        var repo = new Repo(new RepoName(request.Name), null, null, timeService.Now());
+        var repo = new Repo(new RepoName(request.Name), timeService.Now())
+        {
+            AdapterData = new AdapterData(
+                new AdapterIdentifier(request.AdapterId),
+                new AdapterConfiguration(request.AdapterConfiguration))
+        };
         repoRepository.AddNewRepo(repo);
         await unitOfWork.CommitAsync(cancellationToken);
 
@@ -51,5 +56,5 @@ public class CreateRepoEndpoint : IEndpoint
     }
 
 
-    public record CreateRepoRequest(string Name, string? ModAdapterScript, string? SavegameAdapterScript);
+    public record CreateRepoRequest(string Name, string AdapterId, string AdapterConfiguration);
 }
