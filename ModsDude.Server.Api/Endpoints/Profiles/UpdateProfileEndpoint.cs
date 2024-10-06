@@ -1,15 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Profiles;
+using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
-using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
@@ -27,7 +25,7 @@ public class UpdateProfileEndpoint : IEndpoint
         UpdateProfileRequest request,
         HttpContext httpContext,
         IRepoAuthorizationService repoAuthorizationService,
-        IProfileService profileService,
+        IProfileRepository profileRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
@@ -36,21 +34,21 @@ public class UpdateProfileEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
         }
 
-        var result = await profileService.Update(new RepoId(repoId), new ProfileId(profileId), new ProfileName(request.Name), cancellationToken);
-
-        switch (result)
+        var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
+        if (profile is null)
         {
-            case UpdateProfileResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return TypedResults.Ok(ProfileDto.FromModel(ok.Profile));
-
-            case UpdateProfileResult.NotFound:
-                return TypedResults.BadRequest(Problems.NotFound);
-
-            case UpdateProfileResult.NameTaken:
-                return TypedResults.BadRequest(Problems.NameTaken(request.Name));
+            return TypedResults.BadRequest(Problems.NotFound);
         }
-        throw new UnreachableException();
+
+        if (await profileRepository.CheckNameIsTaken(new RepoId(repoId), new ProfileName(request.Name), cancellationToken))
+        {
+            return TypedResults.BadRequest(Problems.NameTaken(request.Name));
+        }
+
+        profile.Name = new ProfileName(request.Name);
+        await unitOfWork.CommitAsync(cancellationToken);
+
+        return TypedResults.Ok(ProfileDto.FromModel(profile));
     }
 
 

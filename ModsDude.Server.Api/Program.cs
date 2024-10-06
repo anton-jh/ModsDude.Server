@@ -7,8 +7,6 @@ using ModsDude.Server.Api.Middleware.UserLoading;
 using ModsDude.Server.Application;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Profiles;
-using ModsDude.Server.Application.Features.Repos;
 using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
@@ -67,8 +65,6 @@ builder.Services
     {
         builder.Configuration.Bind("AzureAdB2C", options);
     });
-//builder.Services.AddAuthorization(options
-//    => options.AddApplicationPolicies());
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
@@ -78,10 +74,6 @@ builder.Services.AddScoped<UserLoadingMiddleware>();
 builder.Services
     .AddSingleton<ITimeService, TimeService>()
     .AddTransient<IRepoAuthorizationService, RepoAuthorizationService>();
-
-builder.Services
-    .AddScoped<IRepoService, RepoService>()
-    .AddScoped<IProfileService, ProfileService>();
 
 builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()

@@ -4,10 +4,9 @@ using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Repos;
+using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
-using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
@@ -24,33 +23,30 @@ public class UpdateRepoEndpoint : IEndpoint
         UpdateRepoRequest request,
         HttpContext httpContext,
         IUnitOfWork unitOfWork,
-        IRepoService repoService,
+        IRepoRepository repoRepository,
         IRepoAuthorizationService repoAuthorizationService,
         CancellationToken cancellationToken)
     {
-        var repoId = new RepoId(id);
-
-        if (!await repoAuthorizationService.AuthorizeAsync(httpContext.User.GetUserId(), repoId, RepoMembershipLevel.Admin, cancellationToken))
+        if (!await repoAuthorizationService.AuthorizeAsync(httpContext.User.GetUserId(), new RepoId(id), RepoMembershipLevel.Admin, cancellationToken))
         {
             return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Admin));
         }
-        var name = new RepoName(request.Name);
 
-        var result = await repoService.Update(repoId, name, cancellationToken);
-
-        switch (result)
+        var repo = await repoRepository.GetById(new RepoId(id));
+        if (repo is null)
         {
-            case UpdateRepoResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return TypedResults.Ok(RepoDto.FromModel(ok.Repo));
-
-            case UpdateRepoResult.NotFound:
-                return TypedResults.BadRequest(Problems.NotFound);
-
-            case UpdateRepoResult.NameTaken:
-                return TypedResults.BadRequest(Problems.NameTaken(request.Name));
+            return TypedResults.BadRequest(Problems.NotFound);
         }
-        throw new UnreachableException();
+
+        if (await repoRepository.CheckNameIsTaken(new RepoName(request.Name), cancellationToken))
+        {
+            return TypedResults.BadRequest(Problems.NameTaken(request.Name));
+        }
+
+        repo.Name = new RepoName(request.Name);
+        await unitOfWork.CommitAsync(cancellationToken);
+
+        return TypedResults.Ok(RepoDto.FromModel(repo));
     }
 
 

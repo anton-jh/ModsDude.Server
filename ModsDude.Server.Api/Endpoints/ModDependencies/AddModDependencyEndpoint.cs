@@ -4,12 +4,11 @@ using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Profiles;
+using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
-using System.Diagnostics;
 using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.ModDependencies;
@@ -26,36 +25,37 @@ public class AddModDependencyEndpoint : IEndpoint
         Guid repoId, Guid profileId, AddModDependencyRequest request,
         ClaimsPrincipal claimsPrincipal,
         IRepoAuthorizationService repoAuthorizationService,
-        IProfileService profileService,
+        IProfileRepository profileRepository,
+        IModRepository modRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(claimsPrincipal.GetUserId(), new(repoId), RepoMembershipLevel.Member, cancellationToken))
+        if (!await repoAuthorizationService.AuthorizeAsync(claimsPrincipal.GetUserId(), new RepoId(repoId), RepoMembershipLevel.Member, cancellationToken))
         {
             return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
         }
 
-        var result = await profileService.AddModDependency(
-            new RepoId(repoId),
-            new ProfileId(profileId),
-            new ModId(request.ModId),
-            new ModVersionId(request.VersionId),
-            request.LockVersion,
-            cancellationToken);
-
-        switch (result)
+        var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
+        if (profile is null)
         {
-            case AddModDependencyResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return TypedResults.Ok(ModDependencyDto.FromModel(ok.ModDependency));
-
-            case AddModDependencyResult.ProfileNotFound:
-                return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
-
-            case AddModDependencyResult.ModNotFound:
-                return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No mod '{request.ModId}' found in repo '{repoId}'"));
+            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
         }
-        throw new UnreachableException();
+
+        var modVersion = await modRepository.GetModVersion(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId), cancellationToken);
+        if (modVersion is null)
+        {
+            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No mod '{request.ModId}' found in repo '{repoId}'"));
+        }
+
+        if (profile.ModDependencies.Any(x => x.ModVersion.Mod == modVersion.Mod))
+        {
+            return TypedResults.BadRequest(Problems.ModDependencyExists(profile, modVersion.Mod));
+        }
+
+        var modDependency = profile.AddDependency(modVersion, request.LockVersion);
+        await unitOfWork.CommitAsync(cancellationToken);
+
+        return TypedResults.Ok(ModDependencyDto.FromModel(modDependency));
     }
 
 

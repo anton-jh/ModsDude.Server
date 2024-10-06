@@ -3,11 +3,10 @@ using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Profiles;
+using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
-using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
@@ -23,7 +22,7 @@ public class DeleteProfileEndpoint : IEndpoint
         Guid repoId, Guid profileId,
         HttpContext httpContext,
         IRepoAuthorizationService repoAuthorizationService,
-        IProfileService profileService,
+        IProfileRepository profileRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
@@ -32,17 +31,15 @@ public class DeleteProfileEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
         }
 
-        var result = await profileService.Delete(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
-
-        switch (result)
+        var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
+        if (profile is null)
         {
-            case DeleteProfileResult.Ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return TypedResults.Ok();
-
-            case DeleteProfileResult.NotFound:
-                return TypedResults.BadRequest(Problems.NotFound);
+            return TypedResults.BadRequest(Problems.NotFound);
         }
-        throw new UnreachableException();
+
+        profileRepository.Delete(profile);
+        await unitOfWork.CommitAsync(cancellationToken);
+
+        return TypedResults.Ok();
     }
 }

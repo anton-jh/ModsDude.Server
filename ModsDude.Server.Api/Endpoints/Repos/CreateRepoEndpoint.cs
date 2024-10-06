@@ -4,10 +4,10 @@ using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Repos;
+using ModsDude.Server.Application.Repositories;
+using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
-using System.Diagnostics;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
@@ -22,8 +22,9 @@ public class CreateRepoEndpoint : IEndpoint
 
     private static async Task<Results<Ok<RepoDto>, BadRequest<CustomProblemDetails>>> CreateRepo(
         CreateRepoRequest request,
-        IRepoService repoService,
+        IRepoRepository repoRepository,
         IUnitOfWork unitOfWork,
+        ITimeService timeService,
         ApplicationDbContext dbContext,
         HttpContext httpContext,
         CancellationToken cancellationToken)
@@ -37,31 +38,16 @@ public class CreateRepoEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.NotAuthorized);
         }
 
-        if (request.ModAdapterScript is null && request.SavegameAdapterScript is null)
+        if (await repoRepository.CheckNameIsTaken(new RepoName(request.Name), cancellationToken))
         {
-            //return BadRequest("Cannot create repo with both mod- and savegame-adapters null"); TODO
+            return TypedResults.BadRequest(Problems.NameTaken(request.Name));
         }
 
-        var name = new RepoName(request.Name);
-        AdapterScript? modAdapter = request.ModAdapterScript is null
-            ? null
-            : new AdapterScript(request.ModAdapterScript);
-        AdapterScript? savegameAdapter = request.SavegameAdapterScript is null
-            ? null
-            : new AdapterScript(request.SavegameAdapterScript);
+        var repo = new Repo(new RepoName(request.Name), null, null, timeService.Now());
+        repoRepository.AddNewRepo(repo);
+        await unitOfWork.CommitAsync(cancellationToken);
 
-        var result = await repoService.Create(name, modAdapter, savegameAdapter, userId, cancellationToken);
-
-        switch (result)
-        {
-            case CreateRepoResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return TypedResults.Ok(RepoDto.FromModel(ok.Repo));
-                
-            case CreateRepoResult.NameTaken:
-                return TypedResults.BadRequest(Problems.NameTaken(request.Name));
-        }
-        throw new UnreachableException();
+        return TypedResults.Ok(RepoDto.FromModel(repo));
     }
 
 

@@ -24,11 +24,11 @@ internal class ProfileEntityTypeConfiguration : IEntityTypeConfiguration<Profile
                 ModDependencyShadowProperties.ModVersionId);
 
             modDependency.HasKey(
-                ModDependencyShadowProperties.ProfileId,
+                ModDependencyShadowProperties.ProfileId, // todo: repoid first
                 ModDependencyShadowProperties.RepoId,
                 ModDependencyShadowProperties.ModId,
                 ModDependencyShadowProperties.ModVersionId);
-        });
+        }); // todo: unique index on repoid,profileid,modid
 
         builder.Property(x => x.Name);
         builder.Property(x => x.Created);

@@ -1,4 +1,6 @@
-﻿using ModsDude.Server.Domain.RepoMemberships;
+﻿using ModsDude.Server.Domain.Mods;
+using ModsDude.Server.Domain.Profiles;
+using ModsDude.Server.Domain.RepoMemberships;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -23,6 +25,12 @@ public static class Problems
         Detail = $"The requested resource does not exist."
     };
 
+    public static CustomProblemDetails ModDependencyExists(Profile profile, Mod mod) => new()
+    {
+        Type = ProblemType.ModDependencyExists,
+        Title = $"The profile '{profile.Id.Value}' already has a dependency on mod '{mod.Id.Value}'"
+    };
+
     public static CustomProblemDetails InsufficientRepoAccess(RepoMembershipLevel minimumLevel)
     {
         var levelText =
@@ -39,13 +47,12 @@ public static class Problems
         };
     }
 
-    public static CustomProblemDetails NotAuthorized =>
-        new()
-        {
-            Type = ProblemType.NotAuthorized,
-            Title = "Not authorized",
-            Detail = $"You are not authorized to perform this operation."
-        };
+    public static CustomProblemDetails NotAuthorized => new()
+    {
+        Type = ProblemType.NotAuthorized,
+        Title = "Not authorized",
+        Detail = $"You are not authorized to perform this operation."
+    };
 
 
     public enum ProblemType
@@ -55,6 +62,9 @@ public static class Problems
 
         [EnumMember(Value = _typeBaseUri + "not-found")]
         NotFound,
+
+        [EnumMember(Value = _typeBaseUri + "mod-dependency-exists")]
+        ModDependencyExists,
 
         [EnumMember(Value = _typeBaseUri + "insufficient-repo-access")]
         InsufficientRepoAccess,

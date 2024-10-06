@@ -4,9 +4,11 @@ using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
-using ModsDude.Server.Application.Features.Profiles;
+using ModsDude.Server.Application.Repositories;
+using ModsDude.Server.Domain.Common;
+using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
-using System.Diagnostics;
+using ModsDude.Server.Domain.Repos;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
@@ -23,7 +25,8 @@ public class CreateProfileEndpoint : IEndpoint
         CreateProfileRequest request,
         HttpContext httpContext,
         IRepoAuthorizationService repoAuthorizationService,
-        IProfileService profileService,
+        IProfileRepository profileRepository,
+        ITimeService timeService,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
@@ -32,18 +35,16 @@ public class CreateProfileEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
         }
 
-        var result = await profileService.Create(new(repoId), new(request.Name), cancellationToken);
-
-        switch (result)
+        if (await profileRepository.CheckNameIsTaken(new RepoId(repoId), new ProfileName(request.Name), cancellationToken))
         {
-            case CreateProfileResult.Ok ok:
-                await unitOfWork.CommitAsync(cancellationToken);
-                return TypedResults.Ok(ProfileDto.FromModel(ok.Profile));
-
-            case CreateProfileResult.NameTaken:
-                return TypedResults.BadRequest(Problems.NameTaken(request.Name));
+            return TypedResults.BadRequest(Problems.NameTaken(request.Name));
         }
-        throw new UnreachableException();
+
+        var profile = new Profile(new RepoId(repoId), new ProfileName(request.Name), timeService.Now());
+        profileRepository.AddNewProfile(profile);
+        await unitOfWork.CommitAsync(cancellationToken);
+
+        return TypedResults.Ok(ProfileDto.FromModel(profile));
     }
 
 

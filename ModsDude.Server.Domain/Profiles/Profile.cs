@@ -1,5 +1,6 @@
 ﻿using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Repos;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace ModsDude.Server.Domain.Profiles;
 public class Profile(
@@ -46,11 +47,27 @@ public class Profile(
     {
         if (!_modDependencies.Contains(dependency))
         {
-            throw new InvalidOperationException($"Cannot delete dependency on mod '{dependency.ModVersion.Mod.Id}' from profile '{Id}'. Dependency does not belong to profile");
+            throw DependencyNotFoundThrowHelper(dependency.ModVersion.Mod.Id);
         }
 
         _modDependencies.Remove(dependency);
     }
+
+    public void DeleteDependency(ModId modId)
+    {
+        var dependency = _modDependencies.FirstOrDefault(x => x.ModVersion.Mod.Id == modId)
+            ?? throw DependencyNotFoundThrowHelper(modId);
+
+        _modDependencies.Remove(dependency);
+    }
+
+    public bool HasDependencyOn(ModId modId)
+        => _modDependencies.Any(x => x.ModVersion.Mod.Id == modId);
+        
+
+
+    private InvalidOperationException DependencyNotFoundThrowHelper(ModId modId)
+        => new InvalidOperationException($"Cannot delete dependency on mod '{modId}' from profile '{Id}'. Dependency does not belong to profile");
 }
 
 public readonly record struct ProfileId(Guid Value);
