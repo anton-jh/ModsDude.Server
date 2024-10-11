@@ -9,6 +9,7 @@ using ModsDude.Server.Domain.Common;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
+using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
@@ -23,16 +24,21 @@ public class CreateProfileEndpoint : IEndpoint
     private static async Task<Results<Ok<ProfileDto>, BadRequest<CustomProblemDetails>>> Create(
         Guid repoId,
         CreateProfileRequest request,
-        HttpContext httpContext,
-        IRepoAuthorizationService repoAuthorizationService,
+        ClaimsPrincipal claimsPrincipal,
+        IUserRepository userRepository,
         IProfileRepository profileRepository,
         ITimeService timeService,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(httpContext.User.GetUserId(), new(repoId), RepoMembershipLevel.Member, cancellationToken))
+        var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
+            .IsAllowedTo()
+            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member)
+            .GetResult()
+            .MapToBadRequest();
+        if (authResult is not null)
         {
-            return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
+            return authResult;
         }
 
         if (await profileRepository.CheckNameIsTaken(new RepoId(repoId), new ProfileName(request.Name), cancellationToken))

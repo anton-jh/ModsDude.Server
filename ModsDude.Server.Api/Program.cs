@@ -72,8 +72,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<UserLoadingMiddleware>();
 
 builder.Services
-    .AddSingleton<ITimeService, TimeService>()
-    .AddTransient<IRepoAuthorizationService, RepoAuthorizationService>();
+    .AddSingleton<ITimeService, TimeService>();
 
 builder.Services
     .AddScoped<IRepoMembershipRepository, RepoMembershipRepository>()

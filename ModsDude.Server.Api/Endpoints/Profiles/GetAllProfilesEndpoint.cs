@@ -4,9 +4,11 @@ using ModsDude.Server.Api.Authorization;
 using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
+using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
+using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
@@ -20,14 +22,19 @@ public class GetAllProfilesEndpoint : IEndpoint
 
     private static async Task<Results<Ok<IEnumerable<ProfileDto>>, BadRequest<CustomProblemDetails>>> GetAll(
         Guid repoId,
+        ClaimsPrincipal claimsPrincipal,
         ApplicationDbContext dbContext,
-        IRepoAuthorizationService repoAuthorizationService,
-        HttpContext httpContext,
+        IUserRepository userRepository,
         CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(httpContext.User.GetUserId(), new(repoId), RepoMembershipLevel.Guest, cancellationToken))
+        var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
+            .IsAllowedTo()
+            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Guest)
+            .GetResult()
+            .MapToBadRequest();
+        if (authResult is not null)
         {
-            return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Guest));
+            return authResult;
         }
 
         var profiles = await dbContext.Profiles

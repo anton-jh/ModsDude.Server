@@ -7,6 +7,7 @@ using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
+using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
@@ -20,15 +21,20 @@ public class DeleteProfileEndpoint : IEndpoint
     
     private static async Task<Results<Ok, BadRequest<CustomProblemDetails>>> Delete(
         Guid repoId, Guid profileId,
-        HttpContext httpContext,
-        IRepoAuthorizationService repoAuthorizationService,
+        ClaimsPrincipal claimsPrincipal,
+        IUserRepository userRepository,
         IProfileRepository profileRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(httpContext.User.GetUserId(), new(repoId), RepoMembershipLevel.Member, cancellationToken))
+        var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
+            .IsAllowedTo()
+            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member)
+            .GetResult()
+            .MapToBadRequest();
+        if (authResult is not null)
         {
-            return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Member));
+            return authResult;
         }
 
         var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);

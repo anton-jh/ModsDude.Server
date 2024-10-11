@@ -6,6 +6,7 @@ using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
+using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
@@ -13,24 +14,29 @@ public class DeleteRepoEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("repos/{id:guid}", DeleteRepo);
+        builder.MapDelete("repos/{repoId:guid}", DeleteRepo);
     }
 
 
     private static async Task<Results<Ok, BadRequest<CustomProblemDetails>>> DeleteRepo(
-        Guid id,
+        Guid repoId,
+        ClaimsPrincipal claimsPrincipal,
         IUnitOfWork unitOfWork,
         IRepoRepository repoRepository,
-        IRepoAuthorizationService repoAuthorizationService,
-        HttpContext httpContext,
+        IUserRepository userRepository,
         CancellationToken cancellationToken)
     {
-        if (!await repoAuthorizationService.AuthorizeAsync(httpContext.User.GetUserId(), new RepoId(id), RepoMembershipLevel.Admin, cancellationToken))
+        var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
+            .IsAllowedTo()
+            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Admin)
+            .GetResult()
+            .MapToBadRequest();
+        if (authResult is not null)
         {
-            return TypedResults.BadRequest(Problems.InsufficientRepoAccess(RepoMembershipLevel.Admin));
+            return authResult;
         }
 
-        var repo = await repoRepository.GetById(new RepoId(id));
+        var repo = await repoRepository.GetById(new RepoId(repoId));
         if (repo is null)
         {
             return TypedResults.BadRequest(Problems.NotFound);
