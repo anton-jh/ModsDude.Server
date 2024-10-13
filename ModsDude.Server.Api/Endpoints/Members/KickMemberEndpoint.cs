@@ -21,10 +21,10 @@ public class KickMemberEndpoint : IEndpoint
     private async Task<Results<Ok, BadRequest<CustomProblemDetails>>> KickMember(
         Guid repoId, string userId,
         ClaimsPrincipal claimsPrincipal,
-        CancellationToken cancellationToken,
         IRepoRepository repoRepository,
         IUserRepository userRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        CancellationToken cancellationToken)
     {
         var repo = await repoRepository.GetById(new RepoId(repoId));
         if (repo is null)

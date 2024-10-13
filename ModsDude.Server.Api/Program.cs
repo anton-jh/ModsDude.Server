@@ -5,7 +5,6 @@ using Microsoft.Identity.Web;
 using ModsDude.Server.Api.Endpoints;
 using ModsDude.Server.Api.Middleware.UserLoading;
 using ModsDude.Server.Application;
-using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Application.Services;
