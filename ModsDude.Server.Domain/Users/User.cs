@@ -36,6 +36,11 @@ public class User(UserId id, Username username, DateTime created)
     {
         _repoMemberships.RemoveWhere(x => x.RepoId == repoId);
     }
+
+    public bool IsMember(RepoId repoId)
+    {
+        return _repoMemberships.Any(x => x.RepoId == repoId);
+    }
 }
 
 public readonly record struct UserId(string Value);
