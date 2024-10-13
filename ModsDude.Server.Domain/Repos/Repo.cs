@@ -35,6 +35,11 @@ public class Repo(
         var membership = _memberships.FirstOrDefault(x => x.UserId == userId)
             ?? throw new InvalidOperationException($"User '{userId}' is not a member of repo '{Id}'");
 
+        if (IsOnlyAdmin(userId))
+        {
+            throw new InvalidOperationException("Cannot kick the only Admin of a repo");
+        }
+
         _memberships.Remove(membership);
     }
 
@@ -46,6 +51,15 @@ public class Repo(
     public RepoMembership? GetMembership(UserId userId)
     {
         return _memberships.FirstOrDefault(x => x.UserId == userId);
+    }
+
+    public bool IsOnlyAdmin(UserId userId)
+    {
+        var numberOfAdmins = _memberships.Count(x => x.Level == RepoMembershipLevel.Admin);
+        var membership = _memberships.FirstOrDefault(x => x.UserId == userId);
+
+        return membership?.Level == RepoMembershipLevel.Admin
+            && numberOfAdmins == 1;
     }
 }
 

@@ -16,31 +16,6 @@ public class User(UserId id, Username username, DateTime created)
     public bool IsTrusted { get; private set; } = false;
 
     public IEnumerable<RepoMembership> RepoMemberships => _repoMemberships;
-
-
-    public void SetMembershipLevel(RepoId repoId, RepoMembershipLevel level)
-    {
-        var membership = _repoMemberships.FirstOrDefault(x => x.RepoId == repoId);
-
-        if (membership is null)
-        {
-            _repoMemberships.Add(new RepoMembership(Id, repoId, level));
-        }
-        else
-        {
-            membership.Level = level;
-        }
-    }
-
-    public void LeaveRepo(RepoId repoId)
-    {
-        _repoMemberships.RemoveWhere(x => x.RepoId == repoId);
-    }
-
-    public bool IsMember(RepoId repoId)
-    {
-        return _repoMemberships.Any(x => x.RepoId == repoId);
-    }
 }
 
 public readonly record struct UserId(string Value);

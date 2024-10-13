@@ -14,7 +14,7 @@ public class KickMemberEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("repos/{repoId:guid}/members/{userIdm}", KickMember);
+        builder.MapDelete("repos/{repoId:guid}/members/{userId}", KickMember);
     }
 
 
@@ -22,14 +22,20 @@ public class KickMemberEndpoint : IEndpoint
         Guid repoId, string userId,
         ClaimsPrincipal claimsPrincipal,
         CancellationToken cancellationToken,
+        IRepoRepository repoRepository,
         IUserRepository userRepository,
         IUnitOfWork unitOfWork)
     {
-        var subjectUser = await userRepository.GetByIdAsync(new UserId(userId), cancellationToken);
-        var subjectMembership = subjectUser?.RepoMemberships.FirstOrDefault(x => x.RepoId == new RepoId(repoId));
-        if (subjectUser is null || subjectMembership is null)
+        var repo = await repoRepository.GetById(new RepoId(repoId));
+        if (repo is null)
         {
-            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"Member {userId} does not exist"));
+            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"Repo '{repoId}' does not exist"));
+        }
+
+        var subjectMembership = repo.GetMembership(new UserId(userId));
+        if (subjectMembership is null)
+        {
+            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"Member '{userId}' not found"));
         }
 
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
@@ -41,7 +47,12 @@ public class KickMemberEndpoint : IEndpoint
             return authResult;
         }
 
-        subjectUser.LeaveRepo(new RepoId(repoId));
+        if (repo.IsOnlyAdmin(new UserId(userId)))
+        {
+            return TypedResults.BadRequest(Problems.CannotKickOnlyAdmin);
+        }
+
+        repo.KickMember(new UserId(userId));
         await unitOfWork.CommitAsync(cancellationToken);
 
         return TypedResults.Ok();

@@ -54,7 +54,14 @@ public static class Problems
         Detail = $"You are not authorized to perform this operation."
     };
 
+    public static CustomProblemDetails CannotKickOnlyAdmin => new()
+    {
+        Type = ProblemType.CannotKickOnlyAdmin,
+        Title = "Cannot kick last admin",
+        Detail = "You cannot kick the only admin of the repo"
+    };
 
+    
     public enum ProblemType
     {
         [EnumMember(Value = _typeBaseUri + "name-taken")]
@@ -71,5 +78,8 @@ public static class Problems
 
         [EnumMember(Value = _typeBaseUri + "not-authorized")]
         NotAuthorized,
+
+        [EnumMember(Value = _typeBaseUri + "cannot-kick-only-admin")]
+        CannotKickOnlyAdmin,
     }
 }

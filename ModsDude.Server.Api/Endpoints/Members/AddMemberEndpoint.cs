@@ -49,7 +49,7 @@ public class AddMemberEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"Repo with id '{repoId} does not exist'"));
         }
 
-        subjectUser.SetMembershipLevel(new RepoId(repoId), request.MembershipLevel);
+        repo.SetMembershipLevel(subjectUser.Id, request.MembershipLevel);
         await unitOfWork.CommitAsync(cancellationToken);
 
         return TypedResults.Ok();
