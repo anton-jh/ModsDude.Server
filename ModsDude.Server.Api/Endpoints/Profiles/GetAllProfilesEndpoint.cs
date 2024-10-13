@@ -28,9 +28,8 @@ public class GetAllProfilesEndpoint : IEndpoint
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
-            .IsAllowedTo()
-            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Guest)
-            .GetResult()
+            .CheckIsAllowedTo(x => x
+                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Guest))
             .MapToBadRequest();
         if (authResult is not null)
         {

@@ -30,9 +30,8 @@ public class UpdateModDependencyEndpoint : IEndpoint
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
-            .IsAllowedTo()
-            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member)
-            .GetResult()
+            .CheckIsAllowedTo(x => x
+                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member))
             .MapToBadRequest();
         if (authResult is not null)
         {

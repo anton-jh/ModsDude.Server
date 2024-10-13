@@ -5,16 +5,21 @@ namespace ModsDude.Server.Application.Authorization;
 
 public static class AuthorizationUserExtensions
 {
-    public static Task<FluentAuthorizationBuilder> IsAllowedTo(this User? user)
-        => user is not null
-            ? Task.FromResult(new FluentAuthorizationBuilder(user))
-            : throw new NotAuthenticatedException();
-
-    public static async Task<FluentAuthorizationBuilder> IsAllowedTo(this Task<User?> userTask)
+    public static AuthorizationResult? CheckIsAllowedTo(this User? user, Action<FluentAuthorizationBuilder> authorizationAction)
     {
-        var user = await userTask
-            ?? throw new NotAuthenticatedException();
+        if (user is null)
+        {
+            throw new NotAuthenticatedException();
+        }
 
-        return new FluentAuthorizationBuilder(user);
+        var builder = new FluentAuthorizationBuilder(user);
+        authorizationAction(builder);
+        return builder.Result;
+    }
+
+    public static async Task<AuthorizationResult?> CheckIsAllowedTo(this Task<User?> userTask, Action<FluentAuthorizationBuilder> authorizationAction)
+    {
+        var user = await userTask;
+        return CheckIsAllowedTo(user, authorizationAction);
     }
 }

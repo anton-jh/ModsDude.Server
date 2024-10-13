@@ -42,10 +42,9 @@ public class UpdateMembershipEndpoint : IEndpoint
         }
 
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
-            .IsAllowedTo()
-            .ChangeOthersMembership(subjectMembership)
-            .GrantAccessToRepo(new RepoId(repoId), request.NewLevel)
-            .GetResult()
+            .CheckIsAllowedTo(x => x
+                .ChangeOthersMembership(subjectMembership)
+                .GrantAccessToRepo(new RepoId(repoId), request.NewLevel))
             .MapToBadRequest();
         if (authResult is not null)
         {

@@ -7,19 +7,14 @@ namespace ModsDude.Server.Application.Authorization;
 
 public static class FluentAuthorizationBuilderExtensions
 {
-    public static async Task<AuthorizationResult?> GetResult(this Task<FluentAuthorizationBuilder> builderTask)
-        => (await builderTask).Result;
-
-    public static async Task<FluentAuthorizationBuilder> AccessRepoAtLevel(this Task<FluentAuthorizationBuilder> builderTask,
+    public static FluentAuthorizationBuilder AccessRepoAtLevel(this FluentAuthorizationBuilder builder,
         RepoId repoId, RepoMembershipLevel minimumMembershipLevel)
     {
-        var builder = await builderTask;
-
         if (builder.Result is not null)
         {
             return builder;
         }
-
+        
         var membership = builder.User.RepoMemberships.FirstOrDefault(x => x.RepoId == repoId);
 
         if (membership is null || membership.Level < minimumMembershipLevel)
@@ -30,11 +25,9 @@ public static class FluentAuthorizationBuilderExtensions
         return builder;
     }
 
-    public static async Task<FluentAuthorizationBuilder> GrantAccessToRepo(this Task<FluentAuthorizationBuilder> builderTask,
+    public static FluentAuthorizationBuilder GrantAccessToRepo(this FluentAuthorizationBuilder builder,
         RepoId repoId, RepoMembershipLevel level)
     {
-        var builder = await builderTask;
-
         if (builder.Result is not null)
         {
             return builder;
@@ -50,11 +43,9 @@ public static class FluentAuthorizationBuilderExtensions
         return builder;
     }
 
-    public static async Task<FluentAuthorizationBuilder> ChangeOthersMembership(this Task<FluentAuthorizationBuilder> builderTask,
+    public static FluentAuthorizationBuilder ChangeOthersMembership(this FluentAuthorizationBuilder builder,
         RepoMembership subjectMembership)
     {
-        var builder = await builderTask;
-
         if (builder.Result is not null)
         {
             return builder;

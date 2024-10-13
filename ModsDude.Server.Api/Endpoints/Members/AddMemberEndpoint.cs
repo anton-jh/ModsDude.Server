@@ -28,10 +28,9 @@ public class AddMemberEndpoint : IEndpoint
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
-            .IsAllowedTo()
-            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member)
-            .GrantAccessToRepo(new RepoId(repoId), request.MembershipLevel)
-            .GetResult()
+            .CheckIsAllowedTo(x => x
+                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member)
+                .GrantAccessToRepo(new RepoId(repoId), request.MembershipLevel))
             .MapToBadRequest();
         if (authResult is not null)
         {

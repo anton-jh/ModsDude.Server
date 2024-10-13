@@ -29,9 +29,8 @@ public class UpdateRepoEndpoint : IEndpoint
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
-            .IsAllowedTo()
-            .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Admin)
-            .GetResult()
+            .CheckIsAllowedTo(x => x
+                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Admin))
             .MapToBadRequest();
         if (authResult is not null)
         {

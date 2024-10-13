@@ -33,9 +33,8 @@ public class KickMemberEndpoint : IEndpoint
         }
 
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
-            .IsAllowedTo()
-            .ChangeOthersMembership(subjectMembership)
-            .GetResult()
+            .CheckIsAllowedTo(x => x
+                .ChangeOthersMembership(subjectMembership))
             .MapToBadRequest();
         if (authResult is not null)
         {

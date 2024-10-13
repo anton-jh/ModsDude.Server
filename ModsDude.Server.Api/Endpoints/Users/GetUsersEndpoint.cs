@@ -8,7 +8,7 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Users;
 
-public class GetUserEndpoint : IEndpoint
+public class GetUsersEndpoint : IEndpoint
 {
     public void Map(IEndpointRouteBuilder builder)
     {
