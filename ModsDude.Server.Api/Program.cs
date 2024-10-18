@@ -9,8 +9,10 @@ using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
+using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Persistence.DbContexts;
 using ModsDude.Server.Persistence.Repositories;
+using ModsDude.Server.Storage.Extensions;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -86,6 +88,8 @@ builder.Services
 builder.Services
     .AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
+builder.Services.AddStorage(builder.Configuration.GetValue<string>("Storage:StorageAccountName")!);
+
 
 var app = builder.Build();
 
@@ -115,6 +119,11 @@ using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
         .Database.Migrate();
+
+    var modExists = await scope.ServiceProvider.GetRequiredService<IStorageService>().CheckIfModExists(
+        new ModId("test.zip"),
+        new ModVersionId("1.0"),
+        default);
 }
 
 
