@@ -1,6 +1,7 @@
 ﻿using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
+using ModsDude.Server.Domain.Repos;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 
@@ -28,7 +29,8 @@ public static class Problems
     public static CustomProblemDetails ModDependencyExists(Profile profile, Mod mod) => new()
     {
         Type = ProblemType.ModDependencyExists,
-        Title = $"The profile '{profile.Id.Value}' already has a dependency on mod '{mod.Id.Value}'"
+        Title = "Profile already has a dependency on mod",
+        Detail = $"The profile '{profile.Id.Value}' already has a dependency on mod '{mod.Id.Value}'."
     };
 
     public static CustomProblemDetails InsufficientRepoAccess(RepoMembershipLevel minimumLevel)
@@ -58,7 +60,14 @@ public static class Problems
     {
         Type = ProblemType.CannotKickOnlyAdmin,
         Title = "Cannot kick last admin",
-        Detail = "You cannot kick the only admin of the repo"
+        Detail = "You cannot kick the only admin of the repo."
+    };
+
+    public static CustomProblemDetails ModVersionAlreadyExists(RepoId repoId, ModId modId, ModVersionId modVersionId) => new()
+    {
+        Type = ProblemType.AlreadyExists,
+        Title = "The mod version already exists",
+        Detail = $"Repo '{repoId.Value}' already contains a mod version '{modVersionId.Value}' in mod '{modId.Value}'."
     };
 
     
@@ -81,5 +90,8 @@ public static class Problems
 
         [EnumMember(Value = _typeBaseUri + "cannot-kick-only-admin")]
         CannotKickOnlyAdmin,
+
+        [EnumMember(Value = _typeBaseUri + "alreadyExists")]
+        AlreadyExists,
     }
 }

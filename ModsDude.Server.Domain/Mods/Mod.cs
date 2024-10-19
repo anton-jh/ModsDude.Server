@@ -18,7 +18,7 @@ public class Mod
         RepoId repoId,
         ModId id,
         ModVersionId firstVersionId,
-        IReadOnlySet<ModAttribute> attributes,
+        IEnumerable<ModAttribute> attributes,
         DateTimeOffset timestamp,
         string description,
         string displayName)
@@ -54,7 +54,7 @@ public class Mod
 
     public ModVersion AddVersion(
         ModVersionId id,
-        IReadOnlySet<ModAttribute> attributes,
+        IEnumerable<ModAttribute> attributes,
         DateTimeOffset timestamp,
         string description,
         string displayName)
@@ -78,7 +78,7 @@ public class Mod
 
     public ModVersion InsertVersion(
         ModVersionId id,
-        IReadOnlySet<ModAttribute> attributes,
+        IEnumerable<ModAttribute> attributes,
         DateTimeOffset timestamp,
         string description,
         string displayName,
