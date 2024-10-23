@@ -9,10 +9,12 @@ using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Application.Services;
 using ModsDude.Server.Domain.Common;
-using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Persistence.DbContexts;
 using ModsDude.Server.Persistence.Repositories;
 using ModsDude.Server.Storage.Extensions;
+using NSwag;
+using NSwag.AspNetCore;
+using NSwag.Generation.Processors.Security;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,7 +38,34 @@ builder.Services
 
 builder.Services
     .AddEndpointsApiExplorer()
-    .AddOpenApiDocument();
+    .AddOpenApiDocument(config =>
+    {
+        var instance = builder.Configuration["AzureAdB2C:Instance"];
+        var domain = builder.Configuration["AzureAdB2C:Domain"];
+        var policy = builder.Configuration["AzureAdB2C:SignUpSignInPolicyId"];
+
+        config.Title = "ModsDude Server";
+        config.AddSecurity("AzureAD_B2C", new OpenApiSecurityScheme
+        {
+            Type = OpenApiSecuritySchemeType.OAuth2,
+            Flows = new OpenApiOAuthFlows
+            {
+                AuthorizationCode = new OpenApiOAuthFlow
+                {
+                    AuthorizationUrl = $"{instance}/{domain}/oauth2/v2.0/authorize?p={policy}",
+                    TokenUrl = $"{instance}/{domain}/oauth2/v2.0/token?p={policy}",
+                    RefreshUrl = $"{instance}/{domain}/oauth2/v2.0/token?p={policy}",
+                    Scopes =
+                    {
+                        { "offline_access", "Offline access" },
+                        { "openid", "OpenID" },
+                        { "https://modsdude.onmicrosoft.com/modsdude-server/default", "ModsDude Server Default scope" }
+                    }
+                }
+            }
+        });
+        config.OperationProcessors.Add(new AspNetCoreOperationSecurityScopeProcessor("AzureAD_B2C"));
+    });
 
 builder.Services
     .AddApiVersioning(options =>
@@ -101,7 +130,15 @@ var apiVersionSet = app.NewApiVersionSet()
 if (app.Environment.IsDevelopment())
 {
     app.UseOpenApi();
-    app.UseSwaggerUi();
+    app.UseSwaggerUi(config =>
+    {
+        config.OAuth2Client = new OAuth2ClientSettings
+        {
+            ClientId = builder.Configuration["SwaggerAuthentication:ClientId"],
+            ClientSecret = "",
+            UsePkceWithAuthorizationCodeGrant = true
+        };
+    });
 }
 
 app.UseAuthentication();
@@ -119,11 +156,6 @@ using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<ApplicationDbContext>()
         .Database.Migrate();
-
-    var modExists = await scope.ServiceProvider.GetRequiredService<IStorageService>().CheckIfModExists(
-        new ModId("test.zip"),
-        new ModVersionId("1.0"),
-        default);
 }
 
 
