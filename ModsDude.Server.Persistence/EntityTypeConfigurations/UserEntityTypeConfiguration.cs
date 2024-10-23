@@ -14,5 +14,6 @@ internal class UserEntityTypeConfiguration : IEntityTypeConfiguration<User>
         builder.HasIndex(x => x.Username).IsUnique();
 
         builder.HasMany(x => x.RepoMemberships).WithOne().HasForeignKey(x => x.UserId);
+        builder.Navigation(x => x.RepoMemberships).AutoInclude();
     }
 }

@@ -2,18 +2,27 @@
 using ModsDude.Server.Domain.Users;
 
 namespace ModsDude.Server.Domain.Repos;
-public class Repo(
-    RepoName name,
-    DateTime created)
+public class Repo
 {
     private readonly HashSet<RepoMembership> _memberships = [];
 
 
+    // ef
+    private Repo() { }
+
+    public Repo(RepoName name, DateTime created, UserId firstAdmin)
+    {
+        Name = name;
+        Created = created;
+        SetMembershipLevel(firstAdmin, RepoMembershipLevel.Admin);
+    }
+
+
     public RepoId Id { get; init; } = new(Guid.NewGuid());
 
-    public RepoName Name { get; set; } = name;
+    public RepoName Name { get; set; }
     public required AdapterData AdapterData { get; init; }
-    public DateTime Created { get; } = created;
+    public DateTime Created { get; }
 
     
     public void SetMembershipLevel(UserId userId, RepoMembershipLevel level)
