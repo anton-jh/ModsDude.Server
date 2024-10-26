@@ -16,5 +16,7 @@ internal class ModEntityTypeConfiguration : IEntityTypeConfiguration<Mod>
             ModVersionShadowProperties.RepoId,
             ModVersionShadowProperties.ModId)
             .IsRequired();
+
+        builder.Navigation(x => x.Versions).AutoInclude();
     }
 }
