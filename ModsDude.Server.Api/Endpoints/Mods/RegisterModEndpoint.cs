@@ -26,7 +26,7 @@ public class RegisterModEndpoint : IEndpoint
         RegisterModRequest request,
         ClaimsPrincipal claimsPrincipal,
         IUserRepository userRepository,
-        IStorageService storageService,
+        IModStorageService storageService,
         IModRepository modRepository,
         ITimeService timeService,
         IUnitOfWork unitOfWork,
@@ -41,9 +41,9 @@ public class RegisterModEndpoint : IEndpoint
             return authResult;
         }
 
-        if (await storageService.CheckIfModExists(new ModId(request.ModId), new ModVersionId(request.VersionId), cancellationToken))
+        if (!await storageService.CheckIfModExists(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId), cancellationToken))
         {
-            return TypedResults.BadRequest(Problems.ModVersionAlreadyExists(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId)));
+            return TypedResults.BadRequest(Problems.ModFileDoesNotExist(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId)));
         }
 
         var mod = await modRepository.GetMod(new RepoId(repoId), new ModId(request.ModId), cancellationToken);
@@ -63,6 +63,11 @@ public class RegisterModEndpoint : IEndpoint
         }
         else
         {
+            if (mod.CheckHasVersion(new ModVersionId(request.VersionId)))
+            {
+                return TypedResults.BadRequest(Problems.ModVersionAlreadyExists(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId)));
+            }
+
             mod.AddVersion(
                 new ModVersionId(request.VersionId),
                 request.Attributes.Select(ModAttributeDto.ToModel),

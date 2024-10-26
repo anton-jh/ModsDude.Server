@@ -12,7 +12,7 @@ public static class ServiceCollectionExtensions
         {
             clientBuilder.AddBlobServiceClient(new Uri($"https://{storageAccountName}.blob.core.windows.net"));
         });
-        services.AddScoped<IStorageService, StorageService>();
+        services.AddScoped<IModStorageService, ModStorageService>();
 
         return services;
     }

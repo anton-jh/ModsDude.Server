@@ -6,7 +6,9 @@ using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
 using ModsDude.Server.Domain.Common;
+using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
+using ModsDude.Server.Domain.Users;
 using ModsDude.Server.Persistence.DbContexts;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
@@ -43,7 +45,7 @@ public class CreateRepoEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.NameTaken(request.Name));
         }
 
-        var repo = new Repo(new RepoName(request.Name), timeService.Now())
+        var repo = new Repo(new RepoName(request.Name), timeService.Now(), userId)
         {
             AdapterData = new AdapterData(
                 new AdapterIdentifier(request.AdapterId),

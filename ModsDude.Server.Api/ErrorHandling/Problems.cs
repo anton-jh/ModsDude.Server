@@ -70,6 +70,13 @@ public static class Problems
         Detail = $"Repo '{repoId.Value}' already contains a mod version '{modVersionId.Value}' in mod '{modId.Value}'."
     };
 
+    public static CustomProblemDetails ModFileDoesNotExist(RepoId repoId, ModId modId, ModVersionId modVersionId) => new()
+    {
+        Type = ProblemType.FileNotFound,
+        Title = "Cannot find file for mod version",
+        Detail = $"Cannot find file for repo '{repoId.Value}', mod '{modId.Value}' and version '{modVersionId.Value}'."
+    };
+
     
     public enum ProblemType
     {
@@ -91,7 +98,10 @@ public static class Problems
         [EnumMember(Value = _typeBaseUri + "cannot-kick-only-admin")]
         CannotKickOnlyAdmin,
 
-        [EnumMember(Value = _typeBaseUri + "alreadyExists")]
+        [EnumMember(Value = _typeBaseUri + "already-exists")]
         AlreadyExists,
+
+        [EnumMember(Value = _typeBaseUri + "file-not-found")]
+        FileNotFound
     }
 }

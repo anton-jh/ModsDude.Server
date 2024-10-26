@@ -45,6 +45,11 @@ public class Mod
     public IReadOnlySet<ModVersion> Versions => _versions;
 
 
+    public bool CheckHasVersion(ModVersionId versionId)
+    {
+        return Versions.Any(x => x.Id == versionId);
+    }
+
     public ModVersion GetLatestVersion()
     {
         return _versions
