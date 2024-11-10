@@ -8,11 +8,12 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Users;
 
-public class GetUsersEndpoint : IEndpoint
+public class GetUsersV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("users", GetAll);
+        return builder.MapGet("users", GetAll)
+            .WithTags("Users");
     }
 
 

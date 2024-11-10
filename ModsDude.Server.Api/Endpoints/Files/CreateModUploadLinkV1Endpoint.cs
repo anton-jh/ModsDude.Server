@@ -11,11 +11,12 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Files;
 
-public class CreateModUploadLinkEndpoint : IEndpoint
+public class CreateModUploadLinkV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("files/createModUploadLink", CreateModUploadLink);
+        return builder.MapPost("files/createModUploadLink", CreateModUploadLink)
+            .WithTags("Files");
     }
 
 

@@ -5,27 +5,27 @@ using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Repositories;
-using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
 using System.Security.Claims;
 
-namespace ModsDude.Server.Api.Endpoints.ModDependencies;
+namespace ModsDude.Server.Api.Endpoints.Profiles;
 
-public class GetAllModDependenciesEndpoint : IEndpoint
+public class GetProfilesV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies", GetAll);
+        return builder.MapGet("repos/{repoId:guid}/profiles", GetAll)
+            .WithTags("Profiles");
     }
 
 
-    private static async Task<Results<Ok<IEnumerable<ModDependencyDto>>, BadRequest<CustomProblemDetails>>> GetAll(
-        Guid repoId, Guid profileId,
+    private static async Task<Results<Ok<IEnumerable<ProfileDto>>, BadRequest<CustomProblemDetails>>> GetAll(
+        Guid repoId,
         ClaimsPrincipal claimsPrincipal,
-        IUserRepository userRepository,
         ApplicationDbContext dbContext,
+        IUserRepository userRepository,
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
@@ -37,12 +37,11 @@ public class GetAllModDependenciesEndpoint : IEndpoint
             return authResult;
         }
 
-        var modDependencies = await dbContext.Profiles
-            .Where(x => x.RepoId == new RepoId(repoId) && x.Id == new ProfileId(profileId))
-            .SelectMany(x => x.ModDependencies)
+        var profiles = await dbContext.Profiles
+            .Where(x => x.RepoId == new RepoId(repoId))
             .ToListAsync(cancellationToken);
 
-        var dtos = modDependencies.Select(ModDependencyDto.FromModel);
+        var dtos = profiles.Select(ProfileDto.FromModel);
 
         return TypedResults.Ok(dtos);
     }

@@ -4,25 +4,29 @@ using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
+using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Domain.Users;
 using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Members;
 
-public class KickMemberEndpoint : IEndpoint
+public class UpdateMembershipV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("repos/{repoId:guid}/members/{userId}", KickMember);
+        return builder.MapPut("repos/{repoId:guid}/members/{userId}", UpdateMembership)
+            .WithTags("Members");
     }
 
 
-    private async Task<Results<Ok, BadRequest<CustomProblemDetails>>> KickMember(
+    private async Task<Results<Ok, BadRequest<CustomProblemDetails>>> UpdateMembership(
         Guid repoId, string userId,
+        UpdateMembershipRequest request,
         ClaimsPrincipal claimsPrincipal,
-        IRepoRepository repoRepository,
         IUserRepository userRepository,
+        IRepoRepository repoRepository,
+        IRepoMembershipRepository repoMembershipRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
@@ -40,21 +44,20 @@ public class KickMemberEndpoint : IEndpoint
 
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
             .CheckIsAllowedTo(x => x
-                .ChangeOthersMembership(subjectMembership))
+                .ChangeOthersMembership(subjectMembership)
+                .GrantAccessToRepo(new RepoId(repoId), request.NewLevel))
             .MapToBadRequest();
         if (authResult is not null)
         {
             return authResult;
         }
 
-        if (repo.IsOnlyAdmin(new UserId(userId)))
-        {
-            return TypedResults.BadRequest(Problems.CannotKickOnlyAdmin);
-        }
-
-        repo.KickMember(new UserId(userId));
+        subjectMembership.Level = request.NewLevel;
         await unitOfWork.CommitAsync(cancellationToken);
 
         return TypedResults.Ok();
     }
+
+
+    public record UpdateMembershipRequest(RepoMembershipLevel NewLevel);
 }

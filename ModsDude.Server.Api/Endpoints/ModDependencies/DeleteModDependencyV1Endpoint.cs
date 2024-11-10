@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http.HttpResults;
 using ModsDude.Server.Api.Authorization;
-using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
@@ -13,20 +12,20 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.ModDependencies;
 
-public class AddModDependencyEndpoint : IEndpoint
+public class DeleteModDependencyV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies", Add);
+        return builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId}", Delete)
+            .WithTags("ModDependencies");
     }
 
 
-    private static async Task<Results<Ok<ModDependencyDto>, BadRequest<CustomProblemDetails>>> Add(
-        Guid repoId, Guid profileId, AddModDependencyRequest request,
+    private static async Task<Results<Ok, BadRequest<CustomProblemDetails>>> Delete(
+        Guid repoId, Guid profileId, string modId,
         ClaimsPrincipal claimsPrincipal,
         IUserRepository userRepository,
         IProfileRepository profileRepository,
-        IModRepository modRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
@@ -45,23 +44,14 @@ public class AddModDependencyEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
         }
 
-        var modVersion = await modRepository.GetModVersion(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId), cancellationToken);
-        if (modVersion is null)
+        if (!profile.HasDependencyOn(new ModId(modId)))
         {
-            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No mod '{request.ModId}' found in repo '{repoId}'"));
+            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
         }
 
-        if (profile.ModDependencies.Any(x => x.ModVersion.Mod == modVersion.Mod))
-        {
-            return TypedResults.BadRequest(Problems.ModDependencyExists(profile, modVersion.Mod));
-        }
-
-        var modDependency = profile.AddDependency(modVersion, request.LockVersion);
+        profile.DeleteDependency(new ModId(modId));
         await unitOfWork.CommitAsync(cancellationToken);
 
-        return TypedResults.Ok(ModDependencyDto.FromModel(modDependency));
+        return TypedResults.Ok();
     }
-
-
-    public record AddModDependencyRequest(string ModId, string VersionId, bool LockVersion);
 }

@@ -4,24 +4,24 @@ using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
-using ModsDude.Server.Domain.Mods;
 using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using System.Security.Claims;
 
-namespace ModsDude.Server.Api.Endpoints.ModDependencies;
+namespace ModsDude.Server.Api.Endpoints.Profiles;
 
-public class DeleteModDependencyEndpoint : IEndpoint
+public class DeleteProfileV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId}", Delete);
+        return builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}", Delete)
+            .WithTags("Profiles");
     }
 
-
+    
     private static async Task<Results<Ok, BadRequest<CustomProblemDetails>>> Delete(
-        Guid repoId, Guid profileId, string modId,
+        Guid repoId, Guid profileId,
         ClaimsPrincipal claimsPrincipal,
         IUserRepository userRepository,
         IProfileRepository profileRepository,
@@ -40,15 +40,10 @@ public class DeleteModDependencyEndpoint : IEndpoint
         var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
         if (profile is null)
         {
-            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
+            return TypedResults.BadRequest(Problems.NotFound);
         }
 
-        if (!profile.HasDependencyOn(new ModId(modId)))
-        {
-            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
-        }
-
-        profile.DeleteDependency(new ModId(modId));
+        profileRepository.Delete(profile);
         await unitOfWork.CommitAsync(cancellationToken);
 
         return TypedResults.Ok();

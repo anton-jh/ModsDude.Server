@@ -4,45 +4,45 @@ using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
-using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using System.Security.Claims;
 
-namespace ModsDude.Server.Api.Endpoints.Profiles;
+namespace ModsDude.Server.Api.Endpoints.Repos;
 
-public class DeleteProfileEndpoint : IEndpoint
+public class DeleteRepoV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapDelete("repos/{repoId:guid}/profiles/{profileId:guid}", Delete);
+        return builder.MapDelete("repos/{repoId:guid}", DeleteRepo)
+            .WithTags("Repos");
     }
 
-    
-    private static async Task<Results<Ok, BadRequest<CustomProblemDetails>>> Delete(
-        Guid repoId, Guid profileId,
+
+    private static async Task<Results<Ok, BadRequest<CustomProblemDetails>>> DeleteRepo(
+        Guid repoId,
         ClaimsPrincipal claimsPrincipal,
-        IUserRepository userRepository,
-        IProfileRepository profileRepository,
         IUnitOfWork unitOfWork,
+        IRepoRepository repoRepository,
+        IUserRepository userRepository,
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
             .CheckIsAllowedTo(x => x
-                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member))
+                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Admin))
             .MapToBadRequest();
         if (authResult is not null)
         {
             return authResult;
         }
 
-        var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
-        if (profile is null)
+        var repo = await repoRepository.GetById(new RepoId(repoId));
+        if (repo is null)
         {
             return TypedResults.BadRequest(Problems.NotFound);
         }
 
-        profileRepository.Delete(profile);
+        repoRepository.Delete(repo);
         await unitOfWork.CommitAsync(cancellationToken);
 
         return TypedResults.Ok();

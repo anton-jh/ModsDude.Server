@@ -13,19 +13,21 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.ModDependencies;
 
-public class UpdateModDependencyEndpoint : IEndpoint
+public class AddModDependencyV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies/{modId}", Update);
+        return builder.MapPost("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies", Add)
+            .WithTags("ModDependencies");
     }
 
 
-    private static async Task<Results<Ok<ModDependencyDto>, BadRequest<CustomProblemDetails>>> Update(
-        Guid repoId, Guid profileId, string modId, UpdateModDependencyRequest request,
+    private static async Task<Results<Ok<ModDependencyDto>, BadRequest<CustomProblemDetails>>> Add(
+        Guid repoId, Guid profileId, AddModDependencyRequest request,
         ClaimsPrincipal claimsPrincipal,
         IUserRepository userRepository,
         IProfileRepository profileRepository,
+        IModRepository modRepository,
         IUnitOfWork unitOfWork,
         CancellationToken cancellationToken)
     {
@@ -44,25 +46,23 @@ public class UpdateModDependencyEndpoint : IEndpoint
             return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No profile '{profileId}' found in repo '{repoId}'"));
         }
 
-        var modDependency = profile.ModDependencies.FirstOrDefault(x => x.ModVersion.Mod.Id == new ModId(modId));
-        if (modDependency is null)
+        var modVersion = await modRepository.GetModVersion(new RepoId(repoId), new ModId(request.ModId), new ModVersionId(request.VersionId), cancellationToken);
+        if (modVersion is null)
         {
-            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No dependency on mod '{modId}' found in profile '{profileId}'"));
+            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No mod '{request.ModId}' found in repo '{repoId}'"));
         }
 
-        if (!modDependency.ModVersion.Mod.Versions.Any(x => x.Id == new ModVersionId(request.VersionId)))
+        if (profile.ModDependencies.Any(x => x.ModVersion.Mod == modVersion.Mod))
         {
-            return TypedResults.BadRequest(Problems.NotFound.With(x => x.Detail = $"No version '{request.VersionId}' of mod '{modId}' found in repo '{repoId}'"));
+            return TypedResults.BadRequest(Problems.ModDependencyExists(profile, modVersion.Mod));
         }
 
-        modDependency.ChangeVersion(new ModVersionId(request.VersionId));
-        modDependency.LockVersion = request.LockVersion;
-
+        var modDependency = profile.AddDependency(modVersion, request.LockVersion);
         await unitOfWork.CommitAsync(cancellationToken);
 
         return TypedResults.Ok(ModDependencyDto.FromModel(modDependency));
     }
 
 
-    public record UpdateModDependencyRequest(string VersionId, bool LockVersion);
+    public record AddModDependencyRequest(string ModId, string VersionId, bool LockVersion);
 }

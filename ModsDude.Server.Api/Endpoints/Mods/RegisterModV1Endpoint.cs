@@ -13,11 +13,12 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Mods;
 
-public class RegisterModEndpoint : IEndpoint
+public class RegisterModV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("repos/{repoId:guid}/mods", RegisterMod);
+        return builder.MapPost("repos/{repoId:guid}/mods", RegisterMod)
+            .WithTags("Mods");
     }
 
 

@@ -13,11 +13,12 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Profiles;
 
-public class CreateProfileEndpoint : IEndpoint
+public class CreateProfileV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("repos/{repoId:guid}/profiles", Create);
+        return builder.MapPost("repos/{repoId:guid}/profiles", Create)
+            .WithTags("Profiles");
     }
 
 

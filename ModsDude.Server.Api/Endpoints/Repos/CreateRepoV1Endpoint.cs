@@ -13,12 +13,13 @@ using ModsDude.Server.Persistence.DbContexts;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
-public class CreateRepoEndpoint : IEndpoint
+public class CreateRepoV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("repos", CreateRepo)
-            .RequireAuthorization();
+        return builder.MapPost("repos", CreateRepo)
+            .RequireAuthorization()
+            .WithTags("Repos");
     }
 
 

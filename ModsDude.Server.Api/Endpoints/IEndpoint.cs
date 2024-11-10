@@ -4,7 +4,7 @@ namespace ModsDude.Server.Api.Endpoints;
 
 public interface IEndpoint
 {
-    void Map(IEndpointRouteBuilder builder);
+    RouteHandlerBuilder Map(IEndpointRouteBuilder builder);
 }
 
 
@@ -20,7 +20,10 @@ public static class EndpointMappingExtensions
         foreach (var type in types)
         {
             var instance = (IEndpoint)Activator.CreateInstance(type)!;
-            instance.Map(builder);
+            var routeHandlerBuilder = instance.Map(builder);
+
+            var name = type.Name[..type.Name.IndexOf("Endpoint")];
+            routeHandlerBuilder.WithName(name);
         }
 
         return builder;

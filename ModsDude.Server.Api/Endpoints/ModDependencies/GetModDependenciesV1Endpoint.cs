@@ -5,23 +5,25 @@ using ModsDude.Server.Api.Dtos;
 using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Repositories;
+using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using ModsDude.Server.Persistence.DbContexts;
 using System.Security.Claims;
 
-namespace ModsDude.Server.Api.Endpoints.Mods;
+namespace ModsDude.Server.Api.Endpoints.ModDependencies;
 
-public class GetModsEndpoint : IEndpoint
+public class GetModDependenciesV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("repos/{repoId:guid}/mods", GetAll);
+        return builder.MapGet("repos/{repoId:guid}/profiles/{profileId:guid}/modDependencies", GetAll)
+            .WithTags("ModDependencies");
     }
 
 
-    public async Task<Results<Ok<IEnumerable<ModDto>>, BadRequest<CustomProblemDetails>>> GetAll(
-        Guid repoId,
+    private static async Task<Results<Ok<IEnumerable<ModDependencyDto>>, BadRequest<CustomProblemDetails>>> GetAll(
+        Guid repoId, Guid profileId,
         ClaimsPrincipal claimsPrincipal,
         IUserRepository userRepository,
         ApplicationDbContext dbContext,
@@ -36,11 +38,12 @@ public class GetModsEndpoint : IEndpoint
             return authResult;
         }
 
-        var mods = await dbContext.Mods
-            .Where(x => x.RepoId == new RepoId(repoId))
+        var modDependencies = await dbContext.Profiles
+            .Where(x => x.RepoId == new RepoId(repoId) && x.Id == new ProfileId(profileId))
+            .SelectMany(x => x.ModDependencies)
             .ToListAsync(cancellationToken);
 
-        var dtos = mods.Select(ModDto.FromModel);
+        var dtos = modDependencies.Select(ModDependencyDto.FromModel);
 
         return TypedResults.Ok(dtos);
     }

@@ -6,11 +6,12 @@ using ModsDude.Server.Persistence.DbContexts;
 
 namespace ModsDude.Server.Api.Endpoints.Repos;
 
-public class GetMyReposEndpoint : IEndpoint
+public class GetMyReposV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapGet("repos", GetMyRepos);
+        return builder.MapGet("repos", GetMyRepos)
+            .WithTags("Repos");
     }
 
 

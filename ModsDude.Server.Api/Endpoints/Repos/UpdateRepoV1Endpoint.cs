@@ -5,56 +5,56 @@ using ModsDude.Server.Api.ErrorHandling;
 using ModsDude.Server.Application.Authorization;
 using ModsDude.Server.Application.Dependencies;
 using ModsDude.Server.Application.Repositories;
-using ModsDude.Server.Domain.Profiles;
 using ModsDude.Server.Domain.RepoMemberships;
 using ModsDude.Server.Domain.Repos;
 using System.Security.Claims;
 
-namespace ModsDude.Server.Api.Endpoints.Profiles;
+namespace ModsDude.Server.Api.Endpoints.Repos;
 
-public class UpdateProfileEndpoint : IEndpoint
+public class UpdateRepoV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPut("repos/{repoId:guid}/profiles/{profileId:guid}", Update);
+        return builder.MapPut("repos/{repoId:guid}", UpdateRepo)
+            .WithTags("Repos");
     }
 
 
-    private static async Task<Results<Ok<ProfileDto>, BadRequest<CustomProblemDetails>>> Update(
-        Guid repoId, Guid profileId,
-        UpdateProfileRequest request,
+    private static async Task<Results<Ok<RepoDto>, BadRequest<CustomProblemDetails>>> UpdateRepo(
+        Guid repoId,
+        UpdateRepoRequest request,
         ClaimsPrincipal claimsPrincipal,
-        IUserRepository userRepository,
-        IProfileRepository profileRepository,
         IUnitOfWork unitOfWork,
+        IRepoRepository repoRepository,
+        IUserRepository userRepository,
         CancellationToken cancellationToken)
     {
         var authResult = await userRepository.GetByIdAsync(claimsPrincipal.GetUserId(), cancellationToken)
             .CheckIsAllowedTo(x => x
-                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Member))
+                .AccessRepoAtLevel(new RepoId(repoId), RepoMembershipLevel.Admin))
             .MapToBadRequest();
         if (authResult is not null)
         {
             return authResult;
         }
 
-        var profile = await profileRepository.GetById(new RepoId(repoId), new ProfileId(profileId), cancellationToken);
-        if (profile is null)
+        var repo = await repoRepository.GetById(new RepoId(repoId));
+        if (repo is null)
         {
             return TypedResults.BadRequest(Problems.NotFound);
         }
 
-        if (await profileRepository.CheckNameIsTaken(new RepoId(repoId), new ProfileName(request.Name), cancellationToken))
+        if (await repoRepository.CheckNameIsTaken(new RepoName(request.Name), cancellationToken))
         {
             return TypedResults.BadRequest(Problems.NameTaken(request.Name));
         }
 
-        profile.Name = new ProfileName(request.Name);
+        repo.Name = new RepoName(request.Name);
         await unitOfWork.CommitAsync(cancellationToken);
 
-        return TypedResults.Ok(ProfileDto.FromModel(profile));
+        return TypedResults.Ok(RepoDto.FromModel(repo));
     }
 
 
-    public record UpdateProfileRequest(string Name);
+    public record UpdateRepoRequest(string Name);
 }

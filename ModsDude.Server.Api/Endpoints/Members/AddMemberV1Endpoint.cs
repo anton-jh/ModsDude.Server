@@ -11,11 +11,12 @@ using System.Security.Claims;
 
 namespace ModsDude.Server.Api.Endpoints.Members;
 
-public class AddMemberEndpoint : IEndpoint
+public class AddMemberV1Endpoint : IEndpoint
 {
-    public void Map(IEndpointRouteBuilder builder)
+    public RouteHandlerBuilder Map(IEndpointRouteBuilder builder)
     {
-        builder.MapPost("repos/{repoId:guid}/members", AddMember);
+        return builder.MapPost("repos/{repoId:guid}/members", AddMember)
+            .WithTags("Members");
     }
 
 
